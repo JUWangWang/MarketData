@@ -6,681 +6,363 @@
 <title>金融市場每日監控指標</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#0d0f17; --card:#13161f; --card2:#181b26; --border:#222537;
-  --accent:#4da6ff; --green:#22c55e; --red:#ef4444; --yellow:#f59e0b;
-  --text:#dde2f0; --text2:#7a83a0; --text3:#454d66;
-  --body:'Noto Sans TC',sans-serif; --mono:'JetBrains Mono',monospace; --r:12px;
+:root{
+  --bg:#0d0f17;--card:#13161f;--card2:#181b26;--border:#222537;
+  --accent:#4da6ff;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;
+  --text:#dde2f0;--text2:#7a83a0;--text3:#454d66;
+  --mono:'JetBrains Mono',monospace;--r:12px;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:14px;min-height:100vh;padding-bottom:80px;}
-
-/* ─ Header ─ */
-.hdr{background:rgba(13,15,23,.92);backdrop-filter:blur(12px);padding:13px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;}
-.hdr-inner{max-width:740px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.hdr-logo{display:flex;align-items:center;gap:10px;}
-.logo-box{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#2563eb,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:15px;}
-.hdr-title{font-size:16px;font-weight:700;color:var(--accent);letter-spacing:.2px;}
-.hdr-right{display:flex;align-items:center;gap:8px;}
-.hdr-badge{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--card2);border:1px solid var(--border);padding:3px 10px;border-radius:5px;}
-.btn-sm{background:transparent;border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;transition:all .2s;}
-.btn-sm:hover{border-color:var(--accent);color:var(--accent);}
-.btn-sm.loading{opacity:.5;pointer-events:none;}
-
-/* ─ Page ─ */
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;min-height:100vh;padding-bottom:80px;}
+.hdr{background:rgba(13,15,23,.94);backdrop-filter:blur(12px);padding:13px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;}
+.hdr-in{max-width:740px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.hdr-icon{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#2563eb,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.hdr-title{font-size:16px;font-weight:700;color:var(--accent);}
+.hdr-l{display:flex;align-items:center;gap:9px;}
+.hdr-r{display:flex;align-items:center;gap:7px;}
+.hdr-date{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--card2);border:1px solid var(--border);padding:3px 10px;border-radius:5px;}
+.btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;transition:all .2s;font-family:inherit;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.busy{opacity:.4;pointer-events:none;}
 .page{max-width:740px;margin:0 auto;padding:0 12px;}
-
-/* ─ Date Nav ─ */
-.date-nav{display:flex;align-items:center;gap:8px;padding:14px 0 6px;}
-.dnav-btn{background:var(--card2);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .18s;white-space:nowrap;}
-.dnav-btn:hover{border-color:var(--accent);color:var(--accent);}
-.dnav-btn:disabled{opacity:.35;cursor:not-allowed;}
-.dnav-wrap{flex:1;position:relative;}
-.dnav-wrap select{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 32px 8px 14px;border-radius:8px;font-size:14px;font-family:var(--body);cursor:pointer;appearance:none;}
-.dnav-wrap::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;font-size:11px;}
-.date-note{font-size:11.5px;color:var(--text3);padding:4px 0 10px;font-family:var(--mono);}
-
-/* ─ Section head ─ */
-.sec{display:flex;align-items:center;gap:8px;padding:18px 0 10px;border-bottom:1px solid var(--border);margin-bottom:13px;}
-.sec-txt{font-size:15px;font-weight:700;color:var(--accent);}
-.sec-sub{font-size:12px;color:var(--text3);margin-left:2px;}
-
-/* ─ Card ─ */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 16px;margin-bottom:10px;transition:border-color .2s;}
-.card:hover{border-color:#2e3349;}
-.card-lbl{font-size:12px;color:var(--text2);margin-bottom:11px;display:flex;align-items:center;gap:5px;}
-.card-lbl b{color:var(--text);font-size:13px;}
-
-/* ─ Big number ─ */
-.bign{font-size:54px;font-weight:700;line-height:1;font-family:var(--mono);letter-spacing:-1px;margin-bottom:3px;}
-.bign.g{color:var(--green);} .bign.y{color:var(--yellow);} .bign.r{color:var(--red);} .bign.b{color:var(--accent);}
-.bign-lbl{font-size:13px;font-weight:600;margin-bottom:8px;}
-.bign-chg{font-family:var(--mono);font-size:13px;margin-bottom:10px;}
-.chg-up{color:var(--red);} .chg-dn{color:var(--green);}
-
-/* ─ Progress ─ */
-.pbar{height:3px;background:var(--border);border-radius:2px;margin-bottom:11px;overflow:hidden;}
-.pfill{height:100%;border-radius:2px;transition:width .7s ease;}
-.pfill.g{background:var(--green);} .pfill.y{background:var(--yellow);} .pfill.r{background:var(--red);}
-
-/* ─ Warn badges ─ */
-.wrow{display:flex;gap:6px;flex-wrap:wrap;}
+.dnav{display:flex;align-items:center;gap:8px;padding:14px 0 4px;}
+.db{background:var(--card2);border:1px solid var(--border);color:var(--text2);padding:8px 15px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .18s;white-space:nowrap;font-family:inherit;}
+.db:hover{border-color:var(--accent);color:var(--accent);}
+.db:disabled{opacity:.28;cursor:not-allowed;}
+.dw{flex:1;position:relative;}
+.dw select{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 32px 8px 14px;border-radius:8px;font-size:14px;font-family:inherit;cursor:pointer;appearance:none;}
+.dw::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;font-size:11px;}
+.dnote{font-size:11px;color:var(--text3);padding:3px 0 10px;font-family:var(--mono);}
+.sec{display:flex;align-items:center;gap:7px;padding:18px 0 10px;border-bottom:1px solid var(--border);margin-bottom:13px;}
+.sec-t{font-size:15px;font-weight:700;color:var(--accent);}
+.stag{font-size:10px;color:var(--text3);border:1px solid var(--border);padding:2px 7px;border-radius:3px;font-family:var(--mono);margin-left:2px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:17px 15px;margin-bottom:10px;transition:border-color .2s;}
+.card:hover{border-color:#272b3d;}
+.clbl{font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+.clbl b{color:var(--text);font-size:13px;}
+.bn{font-size:52px;font-weight:700;line-height:1;font-family:var(--mono);letter-spacing:-1px;margin-bottom:3px;}
+.bn.g{color:var(--green);}.bn.y{color:var(--yellow);}.bn.r{color:var(--red);}.bn.b{color:var(--accent);}
+.bn-lbl{font-size:13px;font-weight:600;margin-bottom:7px;}
+.bn-chg{font-family:var(--mono);font-size:13px;margin-bottom:9px;}
+.pbar{height:3px;background:var(--border);border-radius:2px;margin-bottom:10px;overflow:hidden;}
+.pf{height:100%;border-radius:2px;transition:width .7s ease;}
+.pf.g{background:var(--green);}.pf.y{background:var(--yellow);}.pf.r{background:var(--red);}
+.wrow{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
 .wb{padding:2px 9px;border-radius:4px;font-size:11px;font-weight:500;}
-.wb.w1{background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.28);color:#fbbf24;}
-.wb.w2{background:rgba(239,68,68,.11);border:1px solid rgba(239,68,68,.24);color:#f87171;}
-
-/* ─ Grid ─ */
+.wb1{background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.27);color:#fbbf24;}
+.wb2{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.23);color:#f87171;}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
 
-/* ─ Status dots ─ */
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle;}
-.dg{background:var(--green);box-shadow:0 0 5px var(--green);animation:ag 2s infinite;}
-.dy{background:var(--yellow);box-shadow:0 0 5px var(--yellow);animation:ay 2s infinite;}
-.dr{background:var(--red);box-shadow:0 0 5px var(--red);animation:ar 1s infinite;}
-@keyframes ag{0%,100%{box-shadow:0 0 3px var(--green)}50%{box-shadow:0 0 9px var(--green),0 0 15px rgba(34,197,94,.18)}}
-@keyframes ay{0%,100%{box-shadow:0 0 3px var(--yellow)}50%{box-shadow:0 0 9px var(--yellow),0 0 15px rgba(245,158,11,.2)}}
-@keyframes ar{0%,100%{box-shadow:0 0 3px var(--red)}50%{box-shadow:0 0 10px var(--red),0 0 16px rgba(239,68,68,.3)}}
+/* ── 公債卡片 ── */
+.ycard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;transition:border-color .2s;}
+.ycard:hover{border-color:#272b3d;}
+.ycard-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.ycard-title{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px;}
+.ycard-title b{color:var(--text);font-size:13px;}
+.ydot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.yd-g{background:var(--green);box-shadow:0 0 5px var(--green);animation:ag 2s infinite;}
+.yd-y{background:var(--yellow);box-shadow:0 0 5px var(--yellow);animation:ay 2s infinite;}
+.yd-r{background:var(--red);box-shadow:0 0 5px var(--red);animation:ar 1s infinite;}
+.yd-off{background:var(--text3);}
+/* 實際值 */
+.yval{font-size:30px;font-weight:700;font-family:var(--mono);color:var(--accent);margin-bottom:4px;}
+/* bp 變化行 */
+.ybp-row{display:flex;align-items:baseline;gap:6px;margin-bottom:7px;}
+.ybp-big{font-size:19px;font-weight:700;font-family:var(--mono);}
+.ybp-unit{font-size:11px;color:var(--text2);}
+.ybp-pct{font-size:11px;font-family:var(--mono);color:var(--text3);}
+/* 警示門檻 */
+.ythr{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
+.ythr-b{padding:1px 7px;border-radius:3px;font-size:10px;font-weight:500;}
+.ythr-1{background:rgba(245,158,11,.11);border:1px solid rgba(245,158,11,.24);color:#fbbf24;}
+.ythr-2{background:rgba(239,68,68,.09);border:1px solid rgba(239,68,68,.21);color:#f87171;}
+/* 狀態文字 */
+.yalert{font-size:11px;padding:3px 8px;border-radius:4px;font-weight:500;display:inline-block;}
+.yalert.ok{background:rgba(34,197,94,.08);color:var(--green);}
+.yalert.warn{background:rgba(245,158,11,.09);color:var(--yellow);}
+.yalert.danger{background:rgba(239,68,68,.09);color:#f87171;}
+.yalert.na{color:var(--text3);}
+.c-up{color:var(--red);}.c-dn{color:var(--green);}
 
-/* ─ Spinner ─ */
-.sp{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spi .8s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes ag{0%,100%{box-shadow:0 0 3px var(--green)}50%{box-shadow:0 0 8px var(--green),0 0 14px rgba(34,197,94,.15)}}
+@keyframes ay{0%,100%{box-shadow:0 0 3px var(--yellow)}50%{box-shadow:0 0 8px var(--yellow),0 0 14px rgba(245,158,11,.18)}}
+@keyframes ar{0%,100%{box-shadow:0 0 3px var(--red)}50%{box-shadow:0 0 9px var(--red),0 0 15px rgba(239,68,68,.28)}}
+
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:middle;}
+.dg{background:var(--green);box-shadow:0 0 4px var(--green);animation:ag 2s infinite;}
+.dy{background:var(--yellow);box-shadow:0 0 4px var(--yellow);animation:ay 2s infinite;}
+.dr{background:var(--red);box-shadow:0 0 4px var(--red);animation:ar 1s infinite;}
+.sp{display:inline-block;width:11px;height:11px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spi .8s linear infinite;vertical-align:middle;margin-right:5px;}
 @keyframes spi{to{transform:rotate(360deg)}}
-
-/* ─ Table ─ */
 .tbl{width:100%;border-collapse:collapse;}
 .tbl th{font-size:11px;color:var(--text3);padding:0 4px 8px;text-align:left;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);}
 .tbl th:not(:first-child){text-align:center;}
-.tbl td{padding:8px 4px;font-size:13px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.035);vertical-align:middle;}
+.tbl td{padding:8px 4px;font-size:13px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
 .tbl td:first-child{color:var(--text);font-weight:500;}
 .tbl td:not(:first-child){text-align:center;}
 .tbl tr:last-child td{border-bottom:none;}
 .vm{font-family:var(--mono);color:var(--text);}
-.rtv{font-family:var(--mono);color:#60a5fa;font-weight:600;font-size:12.5px;}
-
-/* ─ Stock card ─ */
-.stk-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
-.stk-card:hover{border-color:#2e3349;}
-.stk-price{font-size:26px;font-weight:700;font-family:var(--mono);color:var(--text);margin:4px 0 2px;}
-.stk-badge{display:inline-block;padding:3px 11px;border-radius:18px;font-size:11.5px;font-weight:500;}
-.sb-blue{background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.28);color:#60a5fa;}
-.sb-red{background:rgba(239,68,68,.11);border:1px solid rgba(239,68,68,.24);color:#f87171;}
-
-/* ─ CDS status row ─ */
-.cds-status{display:inline-flex;align-items:center;gap:4px;font-size:12px;}
-
-/* ─ AI ─ */
-.ai-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 18px;}
-.ai-body{font-size:14px;line-height:1.88;color:var(--text2);}
-.ai-body h2{font-size:14px;font-weight:700;color:var(--text);margin:14px 0 7px;}
+.stkc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 15px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.stkc:hover{border-color:#272b3d;}
+.stk-price{font-size:25px;font-weight:700;font-family:var(--mono);color:var(--text);margin:4px 0 2px;}
+.sbadge{display:inline-block;padding:3px 10px;border-radius:16px;font-size:11px;font-weight:500;}
+.sb-b{background:rgba(59,130,246,.13);border:1px solid rgba(59,130,246,.27);color:#60a5fa;}
+.sb-r{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.23);color:#f87171;}
+.ai-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 17px;}
+.ai-body{font-size:13.5px;line-height:1.88;color:var(--text2);}
+.ai-body h2{font-size:13.5px;font-weight:700;color:var(--text);margin:13px 0 6px;}
 .ai-body h2:first-child{margin-top:0;}
-.ai-body p{margin-bottom:10px;}
-.ai-body ol{padding-left:18px;}
-.ai-body li{margin-bottom:7px;}
-
-/* ─ News ─ */
+.ai-body p{margin-bottom:9px;}
+.ai-body ol{padding-left:17px;}
+.ai-body li{margin-bottom:6px;}
 .news-a{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;margin-bottom:8px;display:flex;text-decoration:none;transition:border-color .2s;}
-.news-a:hover{border-color:#2e3349;}
-.news-src{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;background:rgba(59,130,246,.16);color:#60a5fa;margin-bottom:6px;}
-.news-ttl{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:4px;}
-.news-dsc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.news-ts{font-size:11px;color:var(--text3);font-family:var(--mono);}
-
-.empty{text-align:center;padding:28px;color:var(--text3);font-size:13px;}
-.err{color:#f87171;}
-
-/* ─ Source tag ─ */
-.src-tag{font-size:10.5px;color:var(--text3);padding:2px 7px;border:1px solid var(--border);border-radius:3px;font-family:var(--mono);}
-
-@media(max-width:560px){
-  .g2,.g3{grid-template-columns:1fr;}
-  .bign{font-size:42px;}
-}
+.news-a:hover{border-color:#272b3d;}
+.nsrc{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;background:rgba(59,130,246,.15);color:#60a5fa;margin-bottom:6px;}
+.nttl{font-size:13px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:4px;}
+.ndsc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.nts{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.empty{text-align:center;padding:26px;color:var(--text3);font-size:13px;}
+@media(max-width:560px){.g2,.g3{grid-template-columns:1fr;}.bn{font-size:40px;}.yval{font-size:24px;}}
 </style>
 </head>
 <body>
 
 <div class="hdr">
-  <div class="hdr-inner">
-    <div class="hdr-logo">
-      <div class="logo-box">📊</div>
+  <div class="hdr-in">
+    <div class="hdr-l">
+      <div class="hdr-icon">📊</div>
       <span class="hdr-title">金融市場監控指標</span>
     </div>
-    <div class="hdr-right">
-      <span class="hdr-badge" id="hdrDate">—</span>
-      <button class="btn-sm" id="refreshBtn" onclick="loadAll()">⟳ 更新</button>
+    <div class="hdr-r">
+      <span class="hdr-date" id="hdrDate">—</span>
+      <button class="btn" id="refreshBtn" onclick="loadAll()">⟳ 更新</button>
     </div>
   </div>
 </div>
 
 <div class="page">
-
-  <!-- Date Nav -->
-  <div class="date-nav">
-    <button class="dnav-btn" id="prevBtn">‹ 前一天</button>
-    <div class="dnav-wrap"><select id="dateSelect"></select></div>
-    <button class="dnav-btn" id="nextBtn" disabled>後一天 ›</button>
+  <div class="dnav">
+    <button class="db" id="prevBtn">‹ 前一天</button>
+    <div class="dw"><select id="dateSel"></select></div>
+    <button class="db" id="nextBtn" disabled>後一天 ›</button>
   </div>
-  <div class="date-note" id="dateNote">載入中...</div>
+  <div class="dnote" id="dnote"></div>
 
-  <!-- ═══ 預警分析 ═══ -->
-  <div class="sec"><span>📡</span><span class="sec-txt">預警分析</span></div>
+  <div class="sec"><span>📡</span><span class="sec-t">預警分析</span></div>
 
-  <!-- VIX -->
   <div class="card">
-    <div class="card-lbl">😱 <b>VIX 恐慌指數</b> — CBOE Volatility Index <span class="src-tag">Yahoo ^VIX</span></div>
-    <div class="bign y" id="vixN"><span class="sp"></span></div>
-    <div class="bign-lbl" id="vixL" style="color:var(--text2)">載入中...</div>
-    <div class="bign-chg" id="vixC"></div>
-    <div class="pbar"><div class="pfill y" id="vixP" style="width:0%"></div></div>
+    <div class="clbl">😱 <b>VIX 恐慌指數</b> — CBOE Volatility Index <span class="stag">Stooq ^VIX</span></div>
+    <div class="bn y" id="vixN"><span class="sp"></span></div>
+    <div class="bn-lbl" id="vixL" style="color:var(--text2)">載入中...</div>
+    <div class="bn-chg" id="vixC"></div>
+    <div class="pbar"><div class="pf y" id="vixP" style="width:0%"></div></div>
     <div class="wrow">
-      <span class="wb w1">⚠️ 警戒 &gt; 20</span>
-      <span class="wb w2">🚨 恐慌 &gt; 30</span>
+      <span class="wb wb1">⚠️ 警戒 &gt; 20</span>
+      <span class="wb wb2">🚨 恐慌 &gt; 30</span>
     </div>
   </div>
 
-  <!-- MOVE -->
   <div class="card">
-    <div class="card-lbl">📈 <b>MOVE 指數</b> — Bond Volatility <span class="src-tag">Yahoo ^MOVE</span></div>
-    <div class="bign g" id="moveN"><span class="sp"></span></div>
-    <div class="bign-lbl" id="moveL" style="color:var(--text2)">載入中...</div>
-    <div class="bign-chg" id="moveC"></div>
-    <div class="pbar"><div class="pfill g" id="moveP" style="width:0%"></div></div>
+    <div class="clbl">📈 <b>MOVE 指數</b> — Bond Volatility <span class="stag">Stooq ^MOVE</span></div>
+    <div class="bn g" id="moveN"><span class="sp"></span></div>
+    <div class="bn-lbl" id="moveL" style="color:var(--text2)">載入中...</div>
+    <div class="bn-chg" id="moveC"></div>
+    <div class="pbar"><div class="pf g" id="moveP" style="width:0%"></div></div>
     <div class="wrow">
-      <span class="wb w1">⚠️ 偏高 &gt; 110</span>
-      <span class="wb w2">🚨 警戒 &gt; 120</span>
+      <span class="wb wb1">⚠️ 偏高 &gt; 110</span>
+      <span class="wb wb2">🚨 警戒 &gt; 120</span>
     </div>
   </div>
 
   <!-- 公債殖利率 3欄 -->
   <div class="g3">
-    <div class="card">
-      <div class="card-lbl">🏛️ <b>2年期</b> <span class="src-tag">FRED DGS2</span></div>
-      <div class="bign b" id="y2N" style="font-size:34px"><span class="sp"></span></div>
-      <div class="bign-chg" id="y2C" style="margin-top:5px;font-size:12px"></div>
-      <div class="wrow" style="margin-top:8px">
-        <span class="wb w1" style="font-size:10px">⚠️ +20bp</span>
-        <span class="wb w2" style="font-size:10px">🚨 +30bp</span>
+    <div class="ycard">
+      <div class="ycard-head">
+        <div class="ycard-title">🏛️ <b>2年期公債</b><br><span style="font-size:10px;color:var(--text3)">FRED DGS2</span></div>
+        <div class="ydot yd-off" id="y2Dot"></div>
       </div>
+      <div class="yval" id="y2Val"><span class="sp"></span></div>
+      <div class="ybp-row">
+        <span class="ybp-big" id="y2Bp">—</span>
+        <span class="ybp-unit">bps</span>
+        <span class="ybp-pct" id="y2Pct"></span>
+      </div>
+      <div class="ythr">
+        <span class="ythr-b ythr-1">⚠️ ±20bp</span>
+        <span class="ythr-b ythr-2">🚨 ±30bp</span>
+      </div>
+      <div class="yalert na" id="y2Alert">載入中...</div>
     </div>
-    <div class="card">
-      <div class="card-lbl">🏛️ <b>10年期</b> <span class="src-tag">Yahoo ^TNX</span></div>
-      <div class="bign b" id="y10N" style="font-size:34px"><span class="sp"></span></div>
-      <div class="bign-chg" id="y10C" style="margin-top:5px;font-size:12px"></div>
-      <div class="wrow" style="margin-top:8px">
-        <span class="wb w1" style="font-size:10px">⚠️ +15bp</span>
-        <span class="wb w2" style="font-size:10px">🚨 +25bp</span>
+    <div class="ycard">
+      <div class="ycard-head">
+        <div class="ycard-title">🏛️ <b>10年期公債</b><br><span style="font-size:10px;color:var(--text3)">Stooq ^TNX</span></div>
+        <div class="ydot yd-off" id="y10Dot"></div>
       </div>
+      <div class="yval" id="y10Val"><span class="sp"></span></div>
+      <div class="ybp-row">
+        <span class="ybp-big" id="y10Bp">—</span>
+        <span class="ybp-unit">bps</span>
+        <span class="ybp-pct" id="y10Pct"></span>
+      </div>
+      <div class="ythr">
+        <span class="ythr-b ythr-1">⚠️ ±15bp</span>
+        <span class="ythr-b ythr-2">🚨 ±25bp</span>
+      </div>
+      <div class="yalert na" id="y10Alert">載入中...</div>
     </div>
-    <div class="card">
-      <div class="card-lbl">🏛️ <b>30年期</b> <span class="src-tag">Yahoo ^TYX</span></div>
-      <div class="bign b" id="y30N" style="font-size:34px"><span class="sp"></span></div>
-      <div class="bign-chg" id="y30C" style="margin-top:5px;font-size:12px"></div>
-      <div class="wrow" style="margin-top:8px">
-        <span class="wb w1" style="font-size:10px">⚠️ +15bp</span>
-        <span class="wb w2" style="font-size:10px">🚨 +25bp</span>
+    <div class="ycard">
+      <div class="ycard-head">
+        <div class="ycard-title">🏛️ <b>30年期公債</b><br><span style="font-size:10px;color:var(--text3)">Stooq ^TYX</span></div>
+        <div class="ydot yd-off" id="y30Dot"></div>
       </div>
+      <div class="yval" id="y30Val"><span class="sp"></span></div>
+      <div class="ybp-row">
+        <span class="ybp-big" id="y30Bp">—</span>
+        <span class="ybp-unit">bps</span>
+        <span class="ybp-pct" id="y30Pct"></span>
+      </div>
+      <div class="ythr">
+        <span class="ythr-b ythr-1">⚠️ ±15bp</span>
+        <span class="ythr-b ythr-2">🚨 ±25bp</span>
+      </div>
+      <div class="yalert na" id="y30Alert">載入中...</div>
     </div>
   </div>
 
   <!-- 利差 + SOX -->
   <div class="g2">
     <div class="card">
-      <div class="card-lbl">📐 <b>10Y-2Y 利差</b></div>
-      <div class="bign g" id="spN" style="font-size:38px"><span class="sp"></span></div>
-      <div style="font-size:11.5px;color:var(--text3);margin-top:4px" id="spL">計算中...</div>
-      <div class="wrow" style="margin-top:8px">
-        <span class="wb w2" style="font-size:10px">🚨 &lt; 0 倒掛</span>
-      </div>
+      <div class="clbl">📐 <b>10Y-2Y 利差</b></div>
+      <div class="bn g" id="spN" style="font-size:38px"><span class="sp"></span></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:5px" id="spL">計算中...</div>
+      <div class="wrow" style="margin-top:8px"><span class="wb wb2" style="font-size:10px">🚨 &lt; 0 倒掛</span></div>
     </div>
     <div class="card">
-      <div class="card-lbl">🔬 <b>費半 SOX</b> <span class="src-tag">Yahoo ^SOX</span></div>
-      <div class="bign b" id="soxN" style="font-size:34px"><span class="sp"></span></div>
-      <div class="bign-chg" id="soxC" style="margin-top:5px;font-size:12px"></div>
-      <div class="wrow" style="margin-top:8px">
-        <span class="wb w1" style="font-size:10px">⚠️ -3%</span>
-        <span class="wb w2" style="font-size:10px">🚨 -6%</span>
+      <div class="clbl">🔬 <b>費半指數 SOX</b> <span class="stag">Stooq ^SOX</span></div>
+      <div class="bn b" id="soxN" style="font-size:34px"><span class="sp"></span></div>
+      <div class="bn-chg" id="soxC" style="margin-top:4px;font-size:12px"></div>
+      <div class="wrow" style="margin-top:7px">
+        <span class="wb wb1" style="font-size:10px">⚠️ 日跌&gt;3%</span>
+        <span class="wb wb2" style="font-size:10px">🚨 日跌&gt;6%</span>
       </div>
     </div>
   </div>
 
-  <!-- ═══ 個股 ═══ -->
-  <div class="sec"><span>📉</span><span class="sec-txt">主要個股</span><span class="src-tag" style="margin-left:6px">Yahoo Finance</span></div>
+  <div class="sec"><span>📉</span><span class="sec-t">主要個股</span><span class="stag">Stooq .US</span></div>
   <div id="stksWrap"><div class="empty"><span class="sp"></span> 載入中...</div></div>
 
-  <!-- ═══ 國家 CDS ═══ -->
-  <div class="sec"><span>🌏</span><span class="sec-txt">主要國家 CDS</span><span class="src-tag" style="margin-left:6px">worldgovernmentbonds.com</span></div>
+  <div class="sec"><span>🌏</span><span class="sec-t">主要國家 CDS</span><span class="stag">worldgovernmentbonds.com</span></div>
   <div class="card">
     <table class="tbl">
-      <thead><tr><th>國家</th><th>5年CDS (bps)</th><th>日變動</th><th>來源更新</th><th>狀態</th></tr></thead>
+      <thead><tr><th>國家</th><th>5年CDS (bps)</th><th>日變動</th><th>來源</th><th>狀態</th></tr></thead>
       <tbody id="cdsTb"><tr><td colspan="5" class="empty"><span class="sp"></span> 抓取中...</td></tr></tbody>
     </table>
-    <div style="margin-top:10px;font-size:11px;color:var(--text3)">
-      ⚡ 透過 allorigins proxy 抓取 worldgovernmentbonds.com 最新數值 ·
-      <a href="https://www.worldgovernmentbonds.com/sovereign-cds/" target="_blank" style="color:var(--accent)">查看原始頁面</a>
+    <div style="margin-top:9px;font-size:11px;color:var(--text3)">
+      ⚡ 透過 proxy 抓取 worldgovernmentbonds.com ·
+      <a href="https://www.worldgovernmentbonds.com/sovereign-cds/" target="_blank" style="color:var(--accent)">查看來源</a>
     </div>
   </div>
 
-  <!-- ═══ AI 摘要 ═══ -->
-  <div class="sec"><span>🤖</span><span class="sec-txt">AI 每日摘要</span></div>
+  <div class="sec"><span>🤖</span><span class="sec-t">AI 每日摘要</span></div>
   <div class="ai-card"><div class="ai-body" id="aiBody"><span class="sp"></span> 生成中...</div></div>
 
-  <!-- ═══ 新聞 ═══ -->
   <div class="sec">
-    <span>📰</span><span class="sec-txt">今日財經新聞</span>
-    <span class="sec-sub" id="newsCnt"></span>
+    <span>📰</span><span class="sec-t">今日財經新聞</span>
+    <span style="font-size:12px;color:var(--text3);margin-left:4px" id="newsCnt"></span>
   </div>
   <div id="newsWrap"><div class="empty"><span class="sp"></span> 載入中...</div></div>
-
-</div><!-- /page -->
+</div>
 
 <script>
-/* ══════════════════════════════════════════════
-   CONFIG
-══════════════════════════════════════════════ */
+/* ══ CONFIG ══ */
 const CFG = {
-  FRED_KEY:   "0d1cefb6a6e1f5cadc9a75d7fb9a350b",  // 真實2Y公債用
-  CLAUDE_KEY: "",   // 選填
+  FRED_KEY:   "0d1cefb6a6e1f5cadc9a75d7fb9a350b",
+  CLAUDE_KEY: "",
 };
 
-/* ══ PROXIES (依序嘗試) ══ */
-const PROXY = [
-  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+/* ══ DATE ══ */
+let selDate = new Date(); selDate.setHours(12,0,0,0);
+const todayD=()=>{ const t=new Date(); t.setHours(12,0,0,0); return t; };
+const isToday=d=>d.getTime()===todayD().getTime();
+const p2=n=>String(n).padStart(2,'0');
+const fmtISO =d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+const fmtDisp=d=>`${d.getFullYear()}/${p2(d.getMonth()+1)}/${p2(d.getDate())}`;
+const fmtStoq=d=>`${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}`;
+
+function initDateNav(){
+  const sel=document.getElementById('dateSel'), today=todayD();
+  for(let i=0;i<60;i++){
+    const d=new Date(today); d.setDate(today.getDate()-i);
+    const o=document.createElement('option');
+    o.value=fmtISO(d); o.textContent=fmtDisp(d)+(i===0?' (今日)':i===1?' (昨日)':'');
+    if(i===0) o.selected=true; sel.appendChild(o);
+  }
+  refreshUI();
+  sel.onchange=()=>{ selDate=new Date(sel.value+'T12:00:00'); refreshUI(); loadAll(); };
+  document.getElementById('prevBtn').onclick=()=>{ selDate.setDate(selDate.getDate()-1); syncSel(); refreshUI(); loadAll(); };
+  document.getElementById('nextBtn').onclick=()=>{ if(selDate>=todayD())return; selDate.setDate(selDate.getDate()+1); syncSel(); refreshUI(); loadAll(); };
+}
+function syncSel(){
+  const iso=fmtISO(selDate), sel=document.getElementById('dateSel');
+  let found=false;
+  for(const o of sel.options){ if(o.value===iso){o.selected=true;found=true;break;} }
+  if(!found){ const o=document.createElement('option'); o.value=iso; o.textContent=fmtDisp(selDate); o.selected=true; sel.insertBefore(o,sel.firstChild); }
+}
+function refreshUI(){
+  document.getElementById('hdrDate').textContent=fmtDisp(selDate);
+  document.getElementById('nextBtn').disabled=selDate>=todayD();
+  document.getElementById('dnote').textContent=isToday(selDate)
+    ?'顯示最新交易日數據（每15分鐘自動更新）'
+    :`顯示 ${fmtISO(selDate)} 收盤數據`;
+}
+
+/* ══ STOOQ CSV（主要資料源，快速）══ */
+const PX=[
+  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
 ];
-async function proxyFetch(url, timeout=9000) {
-  for (const p of PROXY) {
-    try {
-      const r = await fetch(p(url), {signal: AbortSignal.timeout(timeout)});
-      if (r.ok) return r;
-    } catch(e) {}
+async function stooqGet(sym, tgt){
+  const d1=new Date(tgt); d1.setDate(d1.getDate()-8);
+  const d2=new Date(tgt); d2.setDate(d2.getDate()+2);
+  const url=`https://stooq.com/q/d/l/?s=${encodeURIComponent(sym)}&d1=${fmtStoq(d1)}&d2=${fmtStoq(d2)}&i=d`;
+  for(const px of PX){
+    try{
+      const r=await fetch(px(url),{signal:AbortSignal.timeout(8000)});
+      if(!r.ok) continue;
+      const csv=await r.text();
+      if(!csv||csv.includes('No data')||csv.trim().length<20) continue;
+      const rows=csv.trim().split('\n').slice(1)
+        .map(l=>{ const p=l.split(','); return {date:p[0]?.trim(), close:parseFloat(p[4])}; })
+        .filter(x=>x.date&&!isNaN(x.close));
+      if(!rows.length) continue;
+      const tgtISO=fmtISO(tgt);
+      // 找 <= 目標日的最後一筆
+      const valid=rows.filter(x=>x.date<=tgtISO).sort((a,b)=>b.date.localeCompare(a.date));
+      if(!valid.length) continue;
+      const curr=valid[0].close;
+      // 找前一筆交易日
+      const prevIdx=rows.findIndex(x=>x.date===valid[0].date);
+      const prev=prevIdx>0?rows[prevIdx-1].close:null;
+      return { curr, prev,
+        chgAbs:prev!=null?curr-prev:null,
+        chgPct:prev!=null?(curr-prev)/prev*100:null,
+        date:valid[0].date };
+    }catch(e){ continue; }
   }
   return null;
 }
 
-/* ══ DATE STATE ══ */
-let selDate = new Date();   // 使用者選擇的日期
-selDate.setHours(12,0,0,0);
-
-function isToday(d) {
-  const t = new Date(); t.setHours(12,0,0,0);
-  return d.getTime() === t.getTime();
-}
-function fmtISO(d){ return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`; }
-function fmtDisp(d){ return `${d.getFullYear()}/${p2(d.getMonth()+1)}/${p2(d.getDate())}`; }
-function p2(n){ return String(n).padStart(2,'0'); }
-
-/* ══ DATE NAV ══ */
-function initDateNav() {
-  const sel = document.getElementById('dateSelect');
-  const today = new Date(); today.setHours(12,0,0,0);
-  for(let i=0;i<60;i++) {
-    const d = new Date(today); d.setDate(today.getDate()-i);
-    const o = document.createElement('option');
-    o.value = fmtISO(d); o.textContent = fmtDisp(d) + (i===0?' (今日)':i===1?' (昨日)':'');
-    if(i===0) o.selected=true;
-    sel.appendChild(o);
-  }
-  updateDateUI();
-  sel.onchange = () => {
-    selDate = new Date(sel.value+'T12:00:00');
-    updateDateUI(); loadAll();
-  };
-  document.getElementById('prevBtn').onclick = () => {
-    selDate.setDate(selDate.getDate()-1);
-    syncSel(); updateDateUI(); loadAll();
-  };
-  document.getElementById('nextBtn').onclick = () => {
-    const t = new Date(); t.setHours(12,0,0,0);
-    if(selDate>=t) return;
-    selDate.setDate(selDate.getDate()+1);
-    syncSel(); updateDateUI(); loadAll();
-  };
-}
-function syncSel() {
-  const iso = fmtISO(selDate);
-  const sel = document.getElementById('dateSelect');
-  let found = false;
-  for(const o of sel.options) { if(o.value===iso){o.selected=true;found=true;break;} }
-  // 如果超出下拉範圍就加一個選項
-  if(!found) {
-    const o=document.createElement('option'); o.value=iso; o.textContent=fmtDisp(selDate); o.selected=true;
-    sel.insertBefore(o, sel.firstChild);
-  }
-}
-function updateDateUI() {
-  const today = new Date(); today.setHours(12,0,0,0);
-  const iso = fmtISO(selDate);
-  document.getElementById('hdrDate').textContent = fmtDisp(selDate);
-  document.getElementById('nextBtn').disabled = selDate >= today;
-  const note = isToday(selDate) ? '顯示最新交易日數據（盤中即時更新）' : `顯示 ${iso} 收盤數據`;
-  document.getElementById('dateNote').textContent = note;
-}
-
-/* ══ YAHOO FINANCE (含歷史日期) ══ */
-async function yahooGet(symbol, targetDate) {
-  // targetDate = Date 物件，抓該日前後各3天的1日K
-  const today = new Date(); today.setHours(12,0,0,0);
-  let url;
-  if (isToday(targetDate)) {
-    // 今天：抓最近5天，取最後一筆
-    url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5d&interval=1d&includePrePost=false`;
-  } else {
-    // 歷史：以目標日為中心抓前後5天
-    const from = new Date(targetDate); from.setDate(from.getDate()-5);
-    const to   = new Date(targetDate); to.setDate(to.getDate()+3);
-    const p1 = Math.floor(from.getTime()/1000);
-    const p2 = Math.floor(to.getTime()/1000);
-    url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${p1}&period2=${p2}&interval=1d&includePrePost=false`;
-  }
-  try {
-    const r = await proxyFetch(url);
-    if(!r) return null;
-    const json = await r.json();
-    const res = json?.chart?.result?.[0];
-    if(!res) return null;
-    const ts    = res.timestamp ?? [];
-    const close = res.indicators?.quote?.[0]?.close ?? [];
-    // 過濾有效數據
-    const pairs = ts.map((t,i)=>({t, v:close[i]})).filter(x=>x.v!=null);
-    if(!pairs.length) return null;
-
-    let idx = pairs.length - 1; // 預設用最後一筆
-    if(!isToday(targetDate)) {
-      // 找最接近目標日的那筆（往前找，因為可能是週末）
-      const tgt = targetDate.getTime()/1000;
-      let best = 0, bestDiff = Infinity;
-      pairs.forEach((p,i)=>{ const d=Math.abs(p.t-tgt); if(d<bestDiff){bestDiff=d;best=i;} });
-      idx = best;
-    }
-    const curr = pairs[idx].v;
-    const prev = idx>0 ? pairs[idx-1].v : null;
-    return {
-      curr: parseFloat(curr.toFixed(4)),
-      prev: prev ? parseFloat(prev.toFixed(4)) : null,
-      chgPct: prev ? (curr-prev)/prev*100 : null,
-      chgAbs: prev ? curr-prev : null,
-      date: new Date(pairs[idx].t*1000).toISOString().slice(0,10),
-    };
-  } catch(e) { return null; }
-}
-
-/* ══ FRED (2年期公債 DGS2，含歷史) ══ */
-async function fredGet(seriesId, targetDate) {
-  if(!CFG.FRED_KEY || CFG.FRED_KEY==='YOUR_FRED_API_KEY') return null;
-  try {
-    const d2 = new Date(targetDate); d2.setDate(d2.getDate()+3);
-    const d1 = new Date(targetDate); d1.setDate(d1.getDate()-7);
-    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${CFG.FRED_KEY}&file_type=json&sort_order=desc&limit=5&observation_start=${fmtISO(d1)}&observation_end=${fmtISO(d2)}`;
-    const r = await fetch(url, {signal: AbortSignal.timeout(8000)});
-    const json = await r.json();
-    const obs = (json.observations??[]).filter(o=>o.value!='.' && o.value!='');
-    if(!obs.length) return null;
-    // obs 已降冪排列，取最接近目標日的
-    const curr = parseFloat(obs[0].value);
-    const prev = obs.length>1 ? parseFloat(obs[1].value) : null;
-    return {
-      curr, prev,
-      chgAbs: prev ? curr-prev : null,
-      chgPct: prev ? (curr-prev)/prev*100 : null,
-      date: obs[0].date,
-    };
-  } catch(e) { return null; }
-}
-
-/* ══ CDS — worldgovernmentbonds 抓取 ══ */
-const CDS_COUNTRIES = [
-  {name:'🇺🇸 美國', slug:'united-states', fallback:37.68},
-  {name:'🇰🇷 韓國', slug:'south-korea',   fallback:29.50},
-  {name:'🇯🇵 日本', slug:'japan',          fallback:26.96},
-  {name:'🇨🇳 中國', slug:'china',          fallback:49.96},
-  {name:'🇭🇰 香港', slug:'hong-kong',      fallback:27.95},
-];
-async function fetchCDS(slug, fallback) {
-  // 抓個別國家 CDS 歷史頁，解析最新數值
-  const url = `https://www.worldgovernmentbonds.com/cds-historical-data/${slug}/5-years/`;
-  try {
-    const r = await proxyFetch(url, 10000);
-    if(!r) throw new Error('no response');
-    const html = await r.text();
-    // 找表格中的數值：通常格式為 <td>123.45</td> 在 CDS 數值欄位
-    // worldgovernmentbonds 的 CDS 頁面，數值在 class="w3-right" 或表格的第一個數字欄
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    // 找包含數字的 td（CDS bps 通常是 10-300 範圍的小數）
-    const rows = doc.querySelectorAll('table tr');
-    for(const row of rows) {
-      const tds = row.querySelectorAll('td');
-      if(tds.length >= 2) {
-        const v = parseFloat(tds[1]?.textContent?.trim());
-        if(!isNaN(v) && v>1 && v<2000) {
-          const v2 = tds.length>2 ? parseFloat(tds[2]?.textContent?.trim()) : null;
-          return { val:v, chg: (!isNaN(v2)?v2:null), live:true };
-        }
-      }
-    }
-    throw new Error('parse fail');
-  } catch(e) {
-    return { val:fallback, chg:null, live:false };
-  }
-}
-async function loadCDS() {
-  const results = await Promise.all(CDS_COUNTRIES.map(c => fetchCDS(c.slug, c.fallback).then(r=>({...c,...r}))));
-  const dot = s=>`<span class="dot ${s}"></span>`;
-  const statusDot = v => v>80?'dr':v>50?'dy':'dg';
-  document.getElementById('cdsTb').innerHTML = results.map(c=>{
-    const chgStr = c.chg!=null
-      ? `<span class="${c.chg>=0?'chg-up':'chg-dn'}">${c.chg>=0?'+':''}${c.chg.toFixed(2)}</span>`
-      : '<span style="color:var(--text3)">—</span>';
-    const liveTag = c.live
-      ? '<span style="color:var(--green);font-size:10px">● 即時</span>'
-      : '<span style="color:var(--text3);font-size:10px">● 示範值</span>';
-    return `<tr>
-      <td>${c.name}</td>
-      <td class="vm">${c.val.toFixed(2)}</td>
-      <td>${chgStr}</td>
-      <td>${liveTag}</td>
-      <td>${dot(statusDot(c.val))}</td>
-    </tr>`;
-  }).join('');
-}
-
-/* ══ RENDER HELPERS ══ */
-function chgHtml(pct, abs, unit='%') {
-  if(pct==null) return '';
-  const cls=pct>0?'chg-up':'chg-dn', sign=pct>0?'▲':'▼';
-  if(unit==='bp') return `<span class="${cls}">${sign} ${pct>0?'+':''}${(abs*100).toFixed(2)} bps</span>`;
-  return `<span class="${cls}">${sign} ${Math.abs(pct).toFixed(2)}%</span>`;
-}
-
-function renderBig(cfg) {
-  // cfg: {numId, lblId, chgId, progId, d, colorFn, labelFn, progMax, progCls}
-  const {numId,lblId,chgId,progId,d,colorFn,labelFn,progMax} = cfg;
-  const nEl=document.getElementById(numId);
-  if(!d) { nEl.innerHTML='<span style="color:var(--text3);font-size:16px">無資料</span>'; if(lblId) document.getElementById(lblId).textContent='暫時無法取得'; return; }
-  const v=d.curr, cls=colorFn(v);
-  nEl.className=`bign ${cls}`; nEl.textContent=v.toFixed(2);
-  if(lblId){ const l=document.getElementById(lblId); l.textContent=labelFn(v); l.style.color=`var(--${cls==='g'?'green':cls==='y'?'yellow':'red'})`; }
-  if(chgId) document.getElementById(chgId).innerHTML=chgHtml(d.chgPct, d.chgAbs);
-  if(progId){ const p=document.getElementById(progId); p.className=`pfill ${cls}`; p.style.width=Math.min(100,(v/progMax)*100)+'%'; }
-}
-
-function renderYield(numId, chgId, d) {
-  const el=document.getElementById(numId);
-  if(!d){ el.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>'; return; }
-  el.textContent=d.curr.toFixed(3)+'%';
-  if(chgId) document.getElementById(chgId).innerHTML=chgHtml(d.chgPct, d.chgAbs, 'bp');
-}
-
-function renderSpread(y10, y2) {
-  const el=document.getElementById('spN'), sl=document.getElementById('spL');
-  if(!y10||!y2){ el.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>'; sl.textContent=''; return; }
-  const sp=(y10.curr-y2.curr)*100;
-  const cls=sp<0?'r':'g';
-  el.className=`bign ${cls}`; el.textContent=sp.toFixed(1);
-  sl.textContent=sp<0?'⚠️ 利率倒掛！':'bps（正斜率）';
-  sl.style.color=sp<0?'var(--red)':'var(--text3)';
-}
-
-function renderSOX(d) {
-  const el=document.getElementById('soxN');
-  if(!d){ el.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>'; return; }
-  el.textContent=d.curr.toLocaleString('en',{maximumFractionDigits:0});
-  document.getElementById('soxC').innerHTML=chgHtml(d.chgPct, d.chgAbs);
-}
-
-/* ── 個股 ── */
-const STK_META = {
-  NVDA:{n:'輝達',    e:'🟢',grade:'IG1'},
-  TSM: {n:'台積電',  e:'🔵',grade:'IG1'},
-  SMCI:{n:'超微電腦',e:'⚡',grade:'HY1'},
-  ARM: {n:'安謀控股',e:'💻',grade:'IG1'},
-  TSLA:{n:'特斯拉',  e:'🚗',grade:'IG3'},
-};
-function renderStocks(arr) {
-  const wrap=document.getElementById('stksWrap');
-  const html=arr.map(({sym,d})=>{
-    const m=STK_META[sym];
-    const isHY=m.grade.startsWith('HY');
-    if(!d) return `<div class="stk-card"><div><div class="card-lbl">${m.e} <b>${sym}</b> ${m.n}</div><div style="color:var(--text3);font-size:13px">暫時無法取得</div></div></div>`;
-    const cc=d.chgPct>0?'chg-up':'chg-dn';
-    return `<div class="stk-card">
-      <div>
-        <div class="card-lbl" style="margin-bottom:5px">${m.e} <b>${sym}</b> <span style="font-weight:400;color:var(--text2)">${m.n}</span></div>
-        <div class="stk-price">$${d.curr.toFixed(2)}</div>
-        <div class="${cc}" style="font-family:var(--mono);font-size:13px;font-weight:600">${d.chgPct>0?'▲':'▼'} ${Math.abs(d.chgPct??0).toFixed(2)}%</div>
-      </div>
-      <div><span class="stk-badge ${isHY?'sb-red':'sb-blue'}">違約: ${m.grade}</span></div>
-    </div>`;
-  }).join('');
-  // 2欄排列
-  wrap.innerHTML=`<div class="g2">${html}</div>`;
-}
-
-/* ── AI ── */
-function md2html(md){
-  return md.replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^(\d+\.) (.+)$/gm,'<li>$2</li>')
-    .replace(/(<li>.*<\/li>\n?)+/gs,m=>`<ol>${m}</ol>`).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/^(?!<[hol])(.*\S.*)$/gm,'<p>$1</p>').replace(/<p><\/p>/g,'');
-}
-async function genAI(vals) {
-  const el=document.getElementById('aiBody');
-  const {vix,move,y2,y10,y30,spread,sox}=vals;
-  if(!CFG.CLAUDE_KEY){
-    const vixLbl=vix?(vix>=30?'<strong style="color:var(--red)">高度恐慌</strong>':vix>=20?'<strong style="color:var(--yellow)">警戒區間</strong>':'<strong style="color:var(--green)">市場平靜</strong>'):'—';
-    el.innerHTML=`<h2>📋 今日重點摘要（${fmtDisp(selDate)}）</h2><ol>
-      <li>VIX 恐慌指數 <b style="font-family:var(--mono)">${vix?vix.toFixed(2):'—'}</b>，${vixLbl}。</li>
-      <li>2年期公債 ${y2?y2.toFixed(3)+'%':'—'}（FRED 真實數據），10年期 ${y10?y10.toFixed(3)+'%':'—'}，利差 <b style="font-family:var(--mono)">${spread!=null?spread.toFixed(1)+' bps':'—'}</b>${spread<0?' <span style="color:var(--red)">⚠️ 倒掛！</span>':''}。</li>
-      <li>費半指數（SOX）${sox?sox.toLocaleString('en',{maximumFractionDigits:0}):'—'}，半導體族群指標。</li>
-      <li>MOVE 指數 ${move?move.toFixed(2):'—'}，${move?(move>=120?'高度警戒':move>=110?'偏高':'正常範圍'):'—'}。</li>
-      <li>國家 CDS 數據已由 worldgovernmentbonds.com 即時抓取（若抓取失敗則顯示示範值）。</li>
-    </ol>
-    <h2>📊 資料說明</h2>
-    <p>2年期公債殖利率改用 <b>FRED DGS2</b>（美聯儲官方數據），確保精準。其餘指數與個股透過 Yahoo Finance 公開 API 取得，日期切換會抓取對應收盤價。</p>
-    <p style="color:var(--text3);font-size:12px;margin-top:10px">⚠️ 填入 Claude API Key（CFG.CLAUDE_KEY）後將自動生成 AI 市場分析。資料僅供參考。</p>`;
-    return;
-  }
-  el.innerHTML='<span class="sp"></span> AI 分析中...';
+/* ══ FRED（2Y 公債 DGS2）══ */
+async function fredGet(series, tgt){
+  if(!CFG.FRED_KEY||CFG.FRED_KEY==='YOUR_FRED_API_KEY') return null;
   try{
-    const prompt=`今天是 ${fmtDisp(selDate)}。金融市場數據：\nVIX=${vix?.toFixed(2)??'N/A'} MOVE=${move?.toFixed(2)??'N/A'}\n2Y=${y2?.toFixed(3)??'N/A'}% 10Y=${y10?.toFixed(3)??'N/A'}% 30Y=${y30?.toFixed(3)??'N/A'}%\n10Y-2Y利差=${spread?.toFixed(1)??'N/A'} bps SOX=${sox?.toFixed(0)??'N/A'}\n\n請用繁體中文，Markdown格式，分三節回答：\n## 📋 今日重點摘要（5條）\n## 📊 市場概況（2段）\n## 🔍 風險提示（1段）`;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CFG.CLAUDE_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
-    const j=await res.json(); el.innerHTML=md2html(j.content?.[0]?.text||'生成失敗');
-  }catch(e){ el.innerHTML=`<span class="err">AI 失敗：${e.message}</span>`; }
-}
-
-/* ── 新聞 ── */
-async function loadNews(){
-  const feeds=[
-    {name:'CNA財經',url:'https://feeds.feedburner.com/rsscna/finance'},
-    {name:'MoneyDJ', url:'https://www.moneydj.com/KMDJ/RssFeed/GetRssFeed.djx?type=1'},
-  ];
-  const all=[];
-  await Promise.all(feeds.map(async f=>{
-    try{
-      const r=await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}&count=6`);
-      const d=await r.json();
-      if(d.items) d.items.forEach(i=>all.push({src:f.name,title:i.title,desc:(i.description||'').replace(/<[^>]*>/g,'').slice(0,80)+'...',time:new Date(i.pubDate).toLocaleString('zh-TW'),link:i.link}));
-    }catch(e){}
-  }));
-  all.sort((a,b)=>new Date(b.time)-new Date(a.time));
-  const wrap=document.getElementById('newsWrap');
-  if(!all.length){ wrap.innerHTML='<div class="empty">新聞暫時無法載入</div>'; return; }
-  document.getElementById('newsCnt').textContent=`（${all.length} 篇）`;
-  wrap.innerHTML=all.map(n=>`
-    <a class="news-a" href="${n.link}" target="_blank" rel="noopener">
-      <div style="flex:1;min-width:0">
-        <span class="news-src">${n.src}</span>
-        <div class="news-ttl">${n.title}</div>
-        <div class="news-dsc">${n.desc}</div>
-        <div class="news-ts">${n.time}</div>
-      </div>
-    </a>`).join('');
-}
-
-/* ══ MAIN LOAD ══ */
-async function loadAll() {
-  const btn=document.getElementById('refreshBtn');
-  btn.classList.add('loading'); btn.textContent='⟳ 更新中';
-  updateDateUI();
-
-  const d = selDate;
-
-  // 並行抓所有數據
-  const [vixD,moveD,y10D,y30D,y2D,soxD, nvdaD,tsmD,smciD,armD,tslaD] = await Promise.all([
-    yahooGet('^VIX',  d),
-    yahooGet('^MOVE', d),
-    yahooGet('^TNX',  d),  // 10Y
-    yahooGet('^TYX',  d),  // 30Y
-    fredGet('DGS2',   d),  // 2Y — FRED 真實數據
-    yahooGet('^SOX',  d),
-    yahooGet('NVDA',  d),
-    yahooGet('TSM',   d),
-    yahooGet('SMCI',  d),
-    yahooGet('ARM',   d),
-    yahooGet('TSLA',  d),
-  ]);
-
-  // VIX
-  renderBig({numId:'vixN',lblId:'vixL',chgId:'vixC',progId:'vixP',d:vixD,progMax:80,
-    colorFn:v=>v>=30?'r':v>=20?'y':'g',
-    labelFn:v=>v>=40?'極度恐慌':v>=30?'高度恐慌':v>=20?'警戒區間':v>=12?'市場平靜':'低波動'});
-
-  // MOVE
-  renderBig({numId:'moveN',lblId:'moveL',chgId:'moveC',progId:'moveP',d:moveD,progMax:160,
-    colorFn:v=>v>=120?'r':v>=110?'y':'g',
-    labelFn:v=>v>=120?'高度警戒':v>=110?'偏高':'正常範圍'});
-
-  // 公債
-  renderYield('y2N','y2C',  y2D);   // FRED
-  renderYield('y10N','y10C',y10D);
-  renderYield('y30N','y30C',y30D);
-  renderSpread(y10D, y2D);
-  renderSOX(soxD);
-
-  // 個股
-  renderStocks([
-    {sym:'NVDA',d:nvdaD},{sym:'TSM',d:tsmD},
-    {sym:'SMCI',d:smciD},{sym:'ARM',d:armD},{sym:'TSLA',d:tslaD}
-  ]);
-
-  // CDS（獨立觸發，比較慢）
-  loadCDS();
-
-  // AI
-  const spread = (y10D&&y2D)?(y10D.curr-y2D.curr)*100:null;
-  genAI({vix:vixD?.curr,move:moveD?.curr,y2:y2D?.curr,y10:y10D?.curr,y30:y30D?.curr,spread,sox:soxD?.curr});
-
-  // 新聞（今日才更新）
-  if(isToday(d)) loadNews();
-  else document.getElementById('newsWrap').innerHTML='<div class="empty">歷史日期不顯示當日新聞</div>';
-
-  btn.classList.remove('loading'); btn.textContent='⟳ 更新';
-}
-
-/* ── Init ── */
-initDateNav();
-loadAll();
-setInterval(()=>{ if(isToday(selDate)) loadAll(); }, 15*60*1000);
-</script>
-</body>
-</html>
+    const d1=new Date(tgt); d1.setDate(d1.getDate()-8);
+    const d2=new Date(tgt); d2.setDate(d2.getDate()+2);
+    const url=`https://api.stlouisfed.org/fred/series/observations?series_id=${series}&api_key=${CFG.FRED_KEY}&file_type=json&sort_order=desc&limit=5&observation_start=${fmtISO(d1)}&observation_end=${fmtISO(d2)}`;
+    const r=await fetch(url,{signal:AbortSignal.timeout(8000)});
+    const j=await r.json();
+    const obs=(j.observations??[]).filter(o=>o.value!='.'&&o.value!='');
+    if(!obs.length) return null;
+    const curr=parseFloat(obs[0].value), prev=obs.length>1?parseFloat(obs[1].value):null;
+    return { curr, p
