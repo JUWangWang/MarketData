@@ -445,7 +445,7 @@ function syncDateSelect() {
    FRED API — 直接 fetch（CORS ✅）
 ══════════════════════════════════════════ */
 async function fredGet(seriesId, days = 10) {
-  if (CONFIG.FRED_KEY === "0d1cefb6a6e1f5cadc9a75d7fb9a350b") return null;
+  if (CONFIG.FRED_KEY === "YOUR_FRED_API_KEY") return null;
   try {
     const obs_end = formatDateISO(new Date());
     const d = new Date(); d.setDate(d.getDate() - days);
