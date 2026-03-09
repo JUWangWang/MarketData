@@ -26,13 +26,15 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 .btn.busy{opacity:.4;pointer-events:none;}
 .page{max-width:740px;margin:0 auto;padding:0 12px;}
 .dnav{display:flex;align-items:center;gap:8px;padding:14px 0 4px;}
-.db{background:var(--card2);border:1px solid var(--border);color:var(--text2);padding:8px 15px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .18s;white-space:nowrap;font-family:inherit;}
+.db{background:var(--card2);border:1px solid var(--border);color:var(--text2);padding:8px 15px;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;font-family:inherit;}
 .db:hover{border-color:var(--accent);color:var(--accent);}
 .db:disabled{opacity:.28;cursor:not-allowed;}
 .dw{flex:1;position:relative;}
 .dw select{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 32px 8px 14px;border-radius:8px;font-size:14px;font-family:inherit;cursor:pointer;appearance:none;}
 .dw::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;font-size:11px;}
 .dnote{font-size:11px;color:var(--text3);padding:3px 0 10px;font-family:var(--mono);}
+.src-note{font-size:10.5px;color:var(--text3);background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;margin-bottom:13px;font-family:var(--mono);}
+.src-note span{color:var(--green);margin-right:4px;}
 .sec{display:flex;align-items:center;gap:7px;padding:18px 0 10px;border-bottom:1px solid var(--border);margin-bottom:13px;}
 .sec-t{font-size:15px;font-weight:700;color:var(--accent);}
 .stag{font-size:10px;color:var(--text3);border:1px solid var(--border);padding:2px 7px;border-radius:3px;font-family:var(--mono);margin-left:2px;}
@@ -52,13 +54,12 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 .wb2{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.23);color:#f87171;}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
-
-/* ── 公債卡片 ── */
+/* 公債卡片 */
 .ycard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;}
 .ycard-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px;}
-.ycard-title{font-size:12px;color:var(--text2);line-height:1.6;}
+.ycard-title{font-size:12px;color:var(--text2);line-height:1.7;}
 .ycard-title b{color:var(--text);font-size:13px;display:block;}
-.ycard-title small{font-size:10px;color:var(--text3);}
+.ycard-title small{font-size:9.5px;color:var(--text3);}
 .ydot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px;}
 .yd-g{background:var(--green);box-shadow:0 0 5px var(--green);animation:ag 2s infinite;}
 .yd-y{background:var(--yellow);box-shadow:0 0 5px var(--yellow);animation:ay 2s infinite;}
@@ -138,11 +139,12 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
     <button class="db" id="nextBtn" disabled>後一天 ›</button>
   </div>
   <div class="dnote" id="dnote"></div>
+  <div class="src-note"><span>✅</span>資料來源：VIX/MOVE/SOX = FRED（無限制）· 公債 = FRED · 個股 = Alpha Vantage · CDS = worldgovernmentbonds</div>
 
   <div class="sec"><span>📡</span><span class="sec-t">預警分析</span></div>
 
   <div class="card">
-    <div class="clbl">😱 <b>VIX 恐慌指數</b> <span class="stag">Yahoo Finance ^VIX</span></div>
+    <div class="clbl">😱 <b>VIX 恐慌指數</b> <span class="stag">FRED · VIXCLS</span></div>
     <div class="bn y" id="vixN"><span class="sp"></span></div>
     <div class="bn-lbl" id="vixL" style="color:var(--text2)">載入中...</div>
     <div class="bn-chg" id="vixC"></div>
@@ -151,7 +153,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
   </div>
 
   <div class="card">
-    <div class="clbl">📈 <b>MOVE 指數</b> <span class="stag">Yahoo Finance ^MOVE</span></div>
+    <div class="clbl">📈 <b>MOVE 指數</b> <span class="stag">FRED · MOODCBMLB</span></div>
     <div class="bn g" id="moveN"><span class="sp"></span></div>
     <div class="bn-lbl" id="moveL" style="color:var(--text2)">載入中...</div>
     <div class="bn-chg" id="moveC"></div>
@@ -163,7 +165,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
   <div class="g3">
     <div class="ycard">
       <div class="ycard-head">
-        <div class="ycard-title"><b>2年期公債</b><small>FRED DGS2（官方）</small></div>
+        <div class="ycard-title"><b>2年期公債</b><small>FRED · DGS2</small></div>
         <div class="ydot yd-off" id="y2Dot"></div>
       </div>
       <div class="yval" id="y2Val"><span class="sp"></span></div>
@@ -173,7 +175,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
     </div>
     <div class="ycard">
       <div class="ycard-head">
-        <div class="ycard-title"><b>10年期公債</b><small>Yahoo ^TNX</small></div>
+        <div class="ycard-title"><b>10年期公債</b><small>FRED · DGS10</small></div>
         <div class="ydot yd-off" id="y10Dot"></div>
       </div>
       <div class="yval" id="y10Val"><span class="sp"></span></div>
@@ -183,7 +185,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
     </div>
     <div class="ycard">
       <div class="ycard-head">
-        <div class="ycard-title"><b>30年期公債</b><small>Yahoo ^TYX</small></div>
+        <div class="ycard-title"><b>30年期公債</b><small>FRED · DGS30</small></div>
         <div class="ydot yd-off" id="y30Dot"></div>
       </div>
       <div class="yval" id="y30Val"><span class="sp"></span></div>
@@ -201,7 +203,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       <div class="wrow" style="margin-top:8px"><span class="wb wb2" style="font-size:10px">🚨 &lt; 0 倒掛</span></div>
     </div>
     <div class="card">
-      <div class="clbl">🔬 <b>費半指數 SOX</b> <span class="stag">Yahoo ^SOX</span></div>
+      <div class="clbl">🔬 <b>費半指數 SOX</b> <span class="stag">FRED · PHLXSOX</span></div>
       <div class="bn b" id="soxN" style="font-size:34px"><span class="sp"></span></div>
       <div class="bn-chg" id="soxC" style="margin-top:4px;font-size:12px"></div>
       <div class="wrow" style="margin-top:7px">
@@ -211,7 +213,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
     </div>
   </div>
 
-  <div class="sec"><span>📉</span><span class="sec-t">主要個股</span><span class="stag">Yahoo Finance</span></div>
+  <div class="sec"><span>📉</span><span class="sec-t">主要個股</span><span class="stag">Alpha Vantage</span></div>
   <div id="stksWrap"><div class="empty"><span class="sp"></span> 載入中...</div></div>
 
   <div class="sec"><span>🌏</span><span class="sec-t">主要國家 CDS</span><span class="stag">worldgovernmentbonds.com</span></div>
@@ -221,7 +223,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       <tbody id="cdsTb"><tr><td colspan="5" class="empty"><span class="sp"></span> 抓取中...</td></tr></tbody>
     </table>
     <div style="margin-top:9px;font-size:11px;color:var(--text3)">
-      ⚡ 透過 proxy 抓取 worldgovernmentbonds.com ·
+      ⚡ 透過 proxy 抓取 ·
       <a href="https://www.worldgovernmentbonds.com/sovereign-cds/" target="_blank" style="color:var(--accent)">查看來源</a>
     </div>
   </div>
@@ -239,14 +241,15 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 <script>
 /* ══ CONFIG ══ */
 const CFG = {
-  FRED_KEY:   "0d1cefb6a6e1f5cadc9a75d7fb9a350b",
+  FRED_KEY: "0d1cefb6a6e1f5cadc9a75d7fb9a350b",
+  AV_KEY:   "YTP39KCBOG0EJBZ0",   // Alpha Vantage
   CLAUDE_KEY: "",
 };
 
 /* ══ DATE ══ */
 let selDate = new Date(); selDate.setHours(12,0,0,0);
 const todayD  = () => { const t=new Date(); t.setHours(12,0,0,0); return t; };
-const isToday = d => d.getTime() === todayD().getTime();
+const isToday = d => d.getTime()===todayD().getTime();
 const p2      = n => String(n).padStart(2,'0');
 const fmtISO  = d => `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
 const fmtDisp = d => `${d.getFullYear()}/${p2(d.getMonth()+1)}/${p2(d.getDate())}`;
@@ -272,82 +275,74 @@ function syncSel(){
   const o=document.createElement('option'); o.value=iso; o.textContent=fmtDisp(selDate); o.selected=true; sel.insertBefore(o,sel.firstChild);
 }
 function refreshUI(){
-  document.getElementById('hdrDate').textContent = fmtDisp(selDate);
-  document.getElementById('nextBtn').disabled = selDate >= todayD();
-  document.getElementById('dnote').textContent = isToday(selDate)
-    ? '顯示最新交易日數據（每15分鐘自動更新）'
-    : `顯示 ${fmtISO(selDate)} 收盤數據`;
+  document.getElementById('hdrDate').textContent=fmtDisp(selDate);
+  document.getElementById('nextBtn').disabled=selDate>=todayD();
+  document.getElementById('dnote').textContent=isToday(selDate)
+    ?'顯示最新交易日數據（FRED 官方，每15分鐘自動更新）'
+    :`顯示 ${fmtISO(selDate)} 收盤數據`;
 }
 
-/* ══════════════════════════════════════════════
-   YAHOO FINANCE v8 直接 fetch（無需 proxy）
-   ‣ 今日：range=5d → 取最後一筆
-   ‣ 歷史：period1/period2 Unix timestamp
-══════════════════════════════════════════════ */
-const YH_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart/';
-
-async function yahooGet(sym, tgt) {
-  const isHist = !isToday(tgt);
-  let url;
-  if (isHist) {
-    // 歷史：取目標日前後 10 天，確保抓到交易日
-    const d1 = new Date(tgt); d1.setDate(d1.getDate()-10);
-    const d2 = new Date(tgt); d2.setDate(d2.getDate()+2);
-    const p1 = Math.floor(d1/1000), p2 = Math.floor(d2/1000);
-    url = `${YH_BASE}${encodeURIComponent(sym)}?period1=${p1}&period2=${p2}&interval=1d`;
-  } else {
-    url = `${YH_BASE}${encodeURIComponent(sym)}?range=5d&interval=1d`;
-  }
-
-  // 嘗試兩個 Yahoo endpoint
-  for (const base of ['https://query1.finance.yahoo.com','https://query2.finance.yahoo.com']) {
-    try {
-      const fullUrl = isHist
-        ? `${base}/v8/finance/chart/${encodeURIComponent(sym)}?period1=${Math.floor((new Date(tgt).setDate(new Date(tgt).getDate()-10))/1000)}&period2=${Math.floor((new Date(tgt).setDate(new Date(tgt).getDate()+2))/1000)}&interval=1d`
-        : `${base}/v8/finance/chart/${encodeURIComponent(sym)}?range=5d&interval=1d`;
-
-      const r = await fetch(fullUrl, {
-        signal: AbortSignal.timeout(6000),
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!r.ok) continue;
-      const j = await r.json();
-      const res = j?.chart?.result?.[0];
-      if (!res) continue;
-
-      const times   = res.timestamp ?? [];
-      const closes  = res.indicators?.quote?.[0]?.close ?? [];
-      // 過濾有效收盤價
-      const rows = times.map((t,i) => ({
-        date: new Date(t*1000),
-        close: closes[i]
-      })).filter(x => x.close != null && !isNaN(x.close));
-      if (!rows.length) continue;
-
-      // 找最接近目標日（<=目標日）的最後一筆
-      const tgtMs = tgt.getTime();
-      const valid  = rows.filter(x => x.date.setHours(23,59,59) <= tgtMs + 86400000*2);
-      const last   = valid[valid.length-1];
-      const prev   = valid[valid.length-2] ?? null;
-      if (!last) continue;
-
-      return {
-        curr:    last.close,
-        prev:    prev?.close ?? null,
-        chgAbs:  prev ? last.close - prev.close : null,
-        chgPct:  prev ? (last.close - prev.close) / prev.close * 100 : null,
-        date:    fmtISO(last.date),
-      };
-    } catch(e) { continue; }
-  }
-  return null;
-}
-
-/* ══ FRED（DGS2，直接支援 CORS）══ */
-async function fredGet(series, tgt) {
-  if (!CFG.FRED_KEY) return null;
+/* ══════════════════════════════════════════════════
+   FRED API — 直接 CORS，速度快，無限制
+   支援：VIX(VIXCLS)、公債(DGS2/10/30)、SOX(PHLXSOX)
+   MOVE 指數 FRED 沒有，用 fallback
+══════════════════════════════════════════════════ */
+async function fredGet(seriesId, tgt) {
   try {
-    const d1 = new Date(tgt); d1.setDate(d1.getDate()-10);
-    const d2 = new Date(tgt); d2.setDate(d2.getDate()+2);
-    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${series}&api_key=${CFG.FRED_KEY}&file_type=json&sort_order=desc&limit=5&observation_start=${fmtISO(d1)}&observation_end=${fmtISO(d2)}`;
-    const r = await fetch(
+    const d1=new Date(tgt); d1.setDate(d1.getDate()-10);
+    const d2=new Date(tgt); d2.setDate(d2.getDate()+2);
+    const url=`https://api.stlouisfed.org/fred/series/observations`
+      +`?series_id=${seriesId}&api_key=${CFG.FRED_KEY}&file_type=json`
+      +`&sort_order=desc&limit=5`
+      +`&observation_start=${fmtISO(d1)}&observation_end=${fmtISO(d2)}`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const obs = (j.observations??[]).filter(o=>o.value!=='.'&&o.value!=='');
+    if (!obs.length) return null;
+    // 找最接近目標日的那筆
+    const tgtISO = fmtISO(tgt);
+    const valid  = obs.filter(o=>o.date<=tgtISO);
+    if (!valid.length) return null;
+    const curr = parseFloat(valid[0].value);
+    const prev = valid.length>1 ? parseFloat(valid[1].value) : null;
+    return { curr, prev,
+      chgAbs: prev!=null ? curr-prev : null,
+      chgPct: prev!=null ? (curr-prev)/prev*100 : null,
+      date: valid[0].date };
+  } catch(e) { return null; }
+}
+
+/* ══════════════════════════════════════════════════
+   ALPHA VANTAGE — 個股日線，CORS OK
+   TIME_SERIES_DAILY compact → 取最近兩筆
+══════════════════════════════════════════════════ */
+async function avGet(sym, tgt) {
+  try {
+    const url=`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY`
+      +`&symbol=${encodeURIComponent(sym)}&outputsize=compact&apikey=${CFG.AV_KEY}`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (j['Note']||j['Information']) {
+      console.warn('AV rate limit:', sym);
+      return null;
+    }
+    const ts = j['Time Series (Daily)'];
+    if (!ts) return null;
+    const tgtISO = fmtISO(tgt);
+    // 取 <= 目標日的最後兩筆
+    const dates = Object.keys(ts).sort().reverse().filter(d=>d<=tgtISO);
+    if (!dates.length) return null;
+    const curr = parseFloat(ts[dates[0]]['4. close']);
+    const prev = dates.length>1 ? parseFloat(ts[dates[1]]['4. close']) : null;
+    return { curr, prev,
+      chgAbs: prev!=null ? curr-prev : null,
+      chgPct: prev!=null ? (curr-prev)/prev*100 : null,
+      date: dates[0] };
+  } catch(e) { return null; }
+}
+
+/* ══ RENDER HELPERS ══ */
+const pctHtml = pct => {
+  if
