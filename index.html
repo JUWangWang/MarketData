@@ -13,103 +13,117 @@
   --body:'Noto Sans TC',sans-serif; --mono:'JetBrains Mono',monospace; --radius:12px;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:14px;min-height:100vh;padding-bottom:60px;}
 
-/* ── Header ── */
+/* Header */
 .app-header{background:#0e1018;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
-.app-header-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.app-header-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
 .logo-row{display:flex;align-items:center;gap:10px;}
-.app-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.app-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:17px;}
 .app-name{font-size:17px;font-weight:700;color:var(--accent);}
+.header-right{display:flex;align-items:center;gap:8px;}
 .header-date{font-family:var(--mono);font-size:12px;color:var(--text3);background:var(--card);border:1px solid var(--border);padding:4px 12px;border-radius:6px;}
+.refresh-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:var(--body);transition:all .2s;}
+.refresh-btn:hover{border-color:var(--accent);color:var(--accent);}
 
-/* ── Page ── */
+/* Page */
 .page{max-width:720px;margin:0 auto;padding:0 12px;}
 
-/* ── Date Nav ── */
+/* Date Nav */
 .date-nav{display:flex;align-items:center;gap:8px;padding:16px 0 8px;}
-.date-btn{background:var(--card);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-family:var(--body);transition:all .18s;white-space:nowrap;}
+.date-btn{background:var(--card);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .18s;white-space:nowrap;}
 .date-btn:hover{border-color:var(--accent);color:var(--accent);}
 .date-select-wrap{flex:1;position:relative;}
 .date-select-wrap select{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 32px 8px 14px;border-radius:8px;font-size:14px;font-family:var(--body);cursor:pointer;appearance:none;}
 .date-select-wrap::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;}
 
-/* ── Section Head ── */
+/* Section Head */
 .section-head{display:flex;align-items:center;gap:8px;padding:20px 0 10px;border-bottom:1px solid var(--border);margin-bottom:14px;}
 .section-head-text{font-size:16px;font-weight:700;color:var(--accent);}
-.section-count{font-size:13px;color:var(--text3);margin-left:4px;}
+.section-count{font-size:13px;color:var(--text3);}
 
-/* ── Card ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;transition:border-color .2s;}
+/* Card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 16px;margin-bottom:10px;transition:border-color .2s;}
 .card:hover{border-color:#3a3f58;}
-.card-label{font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.card-label{font-size:12px;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
 .card-label strong{color:var(--text);font-size:13px;}
 
-/* ── TradingView widget wrapper ── */
-.tv-widget-wrap{border-radius:8px;overflow:hidden;background:#131722;}
-.tv-widget-wrap iframe{display:block;}
+/* Big Number */
+.big-num{font-size:56px;font-weight:700;line-height:1;font-family:var(--mono);margin-bottom:4px;letter-spacing:-1px;}
+.big-num.c-green{color:var(--green);}
+.big-num.c-yellow{color:var(--yellow);}
+.big-num.c-red{color:var(--red);}
+.big-num.c-blue{color:var(--accent);}
+.big-sub{font-size:13px;font-weight:500;margin-bottom:10px;}
+.big-chg{font-family:var(--mono);font-size:14px;font-weight:600;}
+.big-chg.up{color:var(--red);}
+.big-chg.dn{color:var(--green);}
 
-/* ── 2-col grid for small widgets ── */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+/* Progress bar */
+.prog-bar{height:4px;background:var(--border);border-radius:2px;margin:10px 0 12px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;transition:width .8s ease;}
+.prog-fill.c-green{background:var(--green);}
+.prog-fill.c-yellow{background:var(--yellow);}
+.prog-fill.c-red{background:var(--red);}
 
-/* ── Status badge ── */
-.status-row{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);}
-.status-label{font-size:12px;color:var(--text2);}
-.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;}
+/* Warn badges */
+.warn-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.warn-b{padding:2px 10px;border-radius:4px;font-size:11.5px;font-weight:500;}
+.warn-b.w1{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--yellow);}
+.warn-b.w2{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#f87171;}
+
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:0;}
+
+/* Dots */
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;}
 .dot-green{background:var(--green);box-shadow:0 0 5px var(--green);animation:dg 2s infinite;}
 .dot-yellow{background:var(--yellow);box-shadow:0 0 5px var(--yellow);animation:dy 2s infinite;}
 .dot-red{background:var(--red);box-shadow:0 0 5px var(--red);animation:dr 1s infinite;}
-@keyframes dg{0%,100%{box-shadow:0 0 4px var(--green)}50%{box-shadow:0 0 10px var(--green),0 0 18px rgba(34,197,94,.25)}}
-@keyframes dy{0%,100%{box-shadow:0 0 4px var(--yellow)}50%{box-shadow:0 0 10px var(--yellow),0 0 18px rgba(245,158,11,.3)}}
-@keyframes dr{0%,100%{box-shadow:0 0 4px var(--red)}50%{box-shadow:0 0 12px var(--red),0 0 20px rgba(239,68,68,.4)}}
-.status-text-green{color:var(--green);font-size:12px;font-weight:600;}
-.status-text-yellow{color:var(--yellow);font-size:12px;font-weight:600;}
-.status-text-red{color:var(--red);font-size:12px;font-weight:600;}
+@keyframes dg{0%,100%{box-shadow:0 0 3px var(--green)}50%{box-shadow:0 0 9px var(--green),0 0 16px rgba(34,197,94,.2)}}
+@keyframes dy{0%,100%{box-shadow:0 0 3px var(--yellow)}50%{box-shadow:0 0 9px var(--yellow),0 0 16px rgba(245,158,11,.25)}}
+@keyframes dr{0%,100%{box-shadow:0 0 3px var(--red)}50%{box-shadow:0 0 10px var(--red),0 0 18px rgba(239,68,68,.35)}}
 
-/* ── Warn badges ── */
-.warn-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
-.warn-badge{padding:2px 10px;border-radius:4px;font-size:11.5px;font-weight:500;font-family:var(--mono);}
-.warn-badge.w1{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--yellow);}
-.warn-badge.w2{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#f87171;}
+/* Spinner */
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spinner .8s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spinner{to{transform:rotate(360deg)}}
 
-/* ── Alert Table ── */
-.alert-table{width:100%;border-collapse:collapse;}
-.alert-table thead tr{border-bottom:1px solid var(--border);}
-.alert-table th{font-size:11px;color:var(--text3);font-weight:500;padding:0 0 10px;text-align:left;letter-spacing:.5px;text-transform:uppercase;}
-.alert-table th:not(:first-child){text-align:center;}
-.alert-table td{padding:8px 0;font-size:13px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
-.alert-table td:first-child{color:var(--text);font-weight:500;}
-.alert-table td:not(:first-child){text-align:center;}
-.alert-table tr:last-child td{border-bottom:none;}
-.warn-1{font-size:11.5px;color:var(--yellow);}
-.warn-2{font-size:11.5px;color:#f87171;}
+/* Alert table */
+.a-table{width:100%;border-collapse:collapse;}
+.a-table th{font-size:11px;color:var(--text3);padding:0 0 8px;text-align:left;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);}
+.a-table th:not(:first-child){text-align:center;}
+.a-table td{padding:8px 0;font-size:13px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.a-table td:first-child{color:var(--text);font-weight:500;}
+.a-table td:not(:first-child){text-align:center;}
+.a-table tr:last-child td{border-bottom:none;}
+.v-mono{font-family:var(--mono);color:var(--text);}
+.rt-val{font-family:var(--mono);color:#60a5fa;font-weight:600;}
 
-/* ── AI ── */
+/* AI */
 .ai-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px;}
-.ai-content{font-size:14px;line-height:1.85;color:var(--text2);}
-.ai-content h2{font-size:14px;font-weight:700;color:var(--text);margin:14px 0 7px;}
-.ai-content h2:first-child{margin-top:0;}
-.ai-content p{margin-bottom:10px;}
-.ai-content ol{padding-left:18px;}
-.ai-content li{margin-bottom:7px;}
-.spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px;}
-@keyframes spin{to{transform:rotate(360deg)}}
+.ai-body{font-size:14px;line-height:1.85;color:var(--text2);}
+.ai-body h2{font-size:14px;font-weight:700;color:var(--text);margin:14px 0 7px;}
+.ai-body h2:first-child{margin-top:0;}
+.ai-body p{margin-bottom:10px;}
+.ai-body ol{padding-left:18px;}
+.ai-body li{margin-bottom:7px;}
 
-/* ── News ── */
-.news-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;display:flex;gap:12px;text-decoration:none;transition:border-color .2s;}
+/* News */
+.news-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;display:flex;text-decoration:none;transition:border-color .2s;}
 .news-card:hover{border-color:#3a4060;}
-.news-main{flex:1;min-width:0;}
 .news-src{display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:500;background:rgba(59,130,246,.18);color:#60a5fa;margin-bottom:7px;}
 .news-title{font-size:14px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:5px;}
 .news-desc{font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .news-time{font-size:11.5px;color:var(--text3);font-family:var(--mono);}
 
-.state-msg{text-align:center;padding:30px;color:var(--text3);font-size:13px;}
-.up{color:var(--red);} .pos{color:var(--green);}
+.state{text-align:center;padding:30px;color:var(--text3);font-size:13px;}
+.up{color:var(--red);} .dn{color:var(--green);}
 
-@media(max-width:540px){.grid-2,.grid-3{grid-template-columns:1fr;}.app-name{font-size:15px;}}
+@media(max-width:560px){
+  .grid-2,.grid-3{grid-template-columns:1fr;}
+  .big-num{font-size:44px;}
+}
 </style>
 </head>
 <body>
@@ -120,315 +134,198 @@ body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:14
       <div class="app-logo">📊</div>
       <div class="app-name">金融市場每日監控指標</div>
     </div>
-    <div class="header-date" id="headerDate"></div>
+    <div class="header-right">
+      <div class="header-date" id="headerDate">—</div>
+      <button class="refresh-btn" onclick="loadAll()">⟳ 重新整理</button>
+    </div>
   </div>
 </div>
 
 <div class="page">
 
-  <!-- Date Nav -->
   <div class="date-nav">
     <button class="date-btn" id="prevBtn">‹ 前一天</button>
     <div class="date-select-wrap"><select id="dateSelect"></select></div>
     <button class="date-btn" id="nextBtn">後一天 ›</button>
   </div>
 
-  <!-- ═══════════════════════════════
-       SECTION 1: 預警分析
-  ═══════════════════════════════ -->
+  <!-- ═══ SECTION 1: 預警分析 ═══ -->
   <div class="section-head"><span>📡</span><span class="section-head-text">預警分析</span></div>
 
   <!-- VIX -->
   <div class="card">
     <div class="card-label">😱 <strong>VIX 恐慌指數</strong> — CBOE Volatility Index</div>
-    <div class="tv-widget-wrap">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-        {
-          "symbol": "CBOE:VIX",
-          "width": "100%",
-          "colorTheme": "dark",
-          "isTransparent": true,
-          "locale": "zh_TW"
-        }
-        </script>
-      </div>
-    </div>
-    <div class="warn-badges">
-      <span class="warn-badge w1">⚠️ 第一警示 &gt; 20</span>
-      <span class="warn-badge w2">🚨 第二警示 &gt; 30</span>
+    <div class="big-num c-yellow" id="vixNum"><span class="spin"></span></div>
+    <div class="big-sub" id="vixSub" style="color:var(--text2)">載入中...</div>
+    <div class="big-chg" id="vixChg"></div>
+    <div class="prog-bar"><div class="prog-fill c-yellow" id="vixProg" style="width:0%"></div></div>
+    <div class="warn-row">
+      <span class="warn-b w1">⚠️ 第一警示 &gt; 20</span>
+      <span class="warn-b w2">🚨 第二警示 &gt; 30</span>
     </div>
   </div>
 
   <!-- MOVE -->
   <div class="card">
     <div class="card-label">📈 <strong>MOVE 指數</strong> — ICE BofA Bond Volatility</div>
-    <div class="tv-widget-wrap">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-        {
-          "symbol": "INDEX:MOVE",
-          "width": "100%",
-          "colorTheme": "dark",
-          "isTransparent": true,
-          "locale": "zh_TW"
-        }
-        </script>
-      </div>
-    </div>
-    <div class="warn-badges">
-      <span class="warn-badge w1">⚠️ 第一警示 &gt; 110</span>
-      <span class="warn-badge w2">🚨 第二警示 &gt; 120</span>
+    <div class="big-num c-green" id="moveNum"><span class="spin"></span></div>
+    <div class="big-sub" id="moveSub" style="color:var(--text2)">載入中...</div>
+    <div class="big-chg" id="moveChg"></div>
+    <div class="prog-bar"><div class="prog-fill c-green" id="moveProg" style="width:0%"></div></div>
+    <div class="warn-row">
+      <span class="warn-b w1">⚠️ 第一警示 &gt; 110</span>
+      <span class="warn-b w2">🚨 第二警示 &gt; 120</span>
     </div>
   </div>
 
-  <!-- 公債殖利率 3格 -->
-  <div class="grid-3">
+  <!-- 公債 3格 -->
+  <div class="grid-3" style="margin-bottom:10px;">
     <div class="card">
       <div class="card-label">🏛️ <strong>2年期公債</strong></div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"TVC:US02Y","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-      <div class="warn-badges">
-        <span class="warn-badge w1" style="font-size:10.5px">⚠️ +20BP</span>
-        <span class="warn-badge w2" style="font-size:10.5px">🚨 +30BP</span>
+      <div class="big-num c-blue" id="y2Num" style="font-size:36px"><span class="spin"></span></div>
+      <div class="big-chg" id="y2Chg" style="margin-top:4px"></div>
+      <div class="warn-row" style="margin-top:8px">
+        <span class="warn-b w1" style="font-size:10px">⚠️ +20BP</span>
+        <span class="warn-b w2" style="font-size:10px">🚨 +30BP</span>
       </div>
     </div>
     <div class="card">
       <div class="card-label">🏛️ <strong>10年期公債</strong></div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"TVC:US10Y","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-      <div class="warn-badges">
-        <span class="warn-badge w1" style="font-size:10.5px">⚠️ +15BP</span>
-        <span class="warn-badge w2" style="font-size:10.5px">🚨 +25BP</span>
+      <div class="big-num c-blue" id="y10Num" style="font-size:36px"><span class="spin"></span></div>
+      <div class="big-chg" id="y10Chg" style="margin-top:4px"></div>
+      <div class="warn-row" style="margin-top:8px">
+        <span class="warn-b w1" style="font-size:10px">⚠️ +15BP</span>
+        <span class="warn-b w2" style="font-size:10px">🚨 +25BP</span>
       </div>
     </div>
     <div class="card">
       <div class="card-label">🏛️ <strong>30年期公債</strong></div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"TVC:US30Y","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-      <div class="warn-badges">
-        <span class="warn-badge w1" style="font-size:10.5px">⚠️ +15BP</span>
-        <span class="warn-badge w2" style="font-size:10.5px">🚨 +25BP</span>
+      <div class="big-num c-blue" id="y30Num" style="font-size:36px"><span class="spin"></span></div>
+      <div class="big-chg" id="y30Chg" style="margin-top:4px"></div>
+      <div class="warn-row" style="margin-top:8px">
+        <span class="warn-b w1" style="font-size:10px">⚠️ +15BP</span>
+        <span class="warn-b w2" style="font-size:10px">🚨 +25BP</span>
       </div>
     </div>
   </div>
 
-  <!-- 10Y-2Y 利差 + 費半 -->
-  <div class="grid-2">
+  <!-- 利差 + 費半 -->
+  <div class="grid-2" style="margin-bottom:10px;">
     <div class="card">
       <div class="card-label">📐 <strong>10Y-2Y 利差</strong></div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"TVC:US10Y-TVC:US02Y","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-      <div class="warn-badges">
-        <span class="warn-badge w2" style="font-size:10.5px">🚨 &lt; 0 倒掛</span>
+      <div class="big-num" id="spreadNum" style="font-size:40px"><span class="spin"></span></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px" id="spreadSub"></div>
+      <div class="warn-row" style="margin-top:8px">
+        <span class="warn-b w2" style="font-size:10px">🚨 &lt; 0 倒掛</span>
       </div>
     </div>
     <div class="card">
       <div class="card-label">🔬 <strong>費半指數 SOX</strong></div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"NASDAQ:SOX","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-      <div class="warn-badges">
-        <span class="warn-badge w1" style="font-size:10.5px">⚠️ 下跌3%</span>
-        <span class="warn-badge w2" style="font-size:10.5px">🚨 下跌6%</span>
+      <div class="big-num c-blue" id="soxNum" style="font-size:36px"><span class="spin"></span></div>
+      <div class="big-chg" id="soxChg" style="margin-top:4px"></div>
+      <div class="warn-row" style="margin-top:8px">
+        <span class="warn-b w1" style="font-size:10px">⚠️ 下跌3%</span>
+        <span class="warn-b w2" style="font-size:10px">🚨 下跌6%</span>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════
-       SECTION 2: 市場概況（個股）
-  ═══════════════════════════════ -->
+  <!-- ═══ SECTION 2: 個股 ═══ -->
   <div class="section-head"><span>📉</span><span class="section-head-text">主要個股</span></div>
+  <div id="stocksSection"><div class="state"><span class="spin"></span> 載入中...</div></div>
 
-  <!-- NVDA + TSM -->
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-label">🟢 <strong>NVDA</strong> 輝達</div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"NASDAQ:NVDA","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-label">🔵 <strong>TSM</strong> 台積電</div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"NYSE:TSM","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SMCI + ARM + TSLA -->
-  <div class="grid-3">
-    <div class="card">
-      <div class="card-label">⚡ <strong>SMCI</strong> 超微電腦</div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"NASDAQ:SMCI","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-label">💻 <strong>ARM</strong> 安謀控股</div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"NASDAQ:ARM","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-label">🚗 <strong>TSLA</strong> 特斯拉</div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"NASDAQ:TSLA","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════
-       SECTION 3: 國家 CDS
-  ═══════════════════════════════ -->
+  <!-- ═══ SECTION 3: 國家 CDS ═══ -->
   <div class="section-head"><span>🌏</span><span class="section-head-text">主要國家 CDS</span></div>
-
-  <!-- 美國 CDS + 美元指數 -->
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-label">🇺🇸 <strong>美國 CDS 5Y</strong></div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"CAPITALCOM:USDEBT","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-label">💵 <strong>美元指數 DXY</strong></div>
-      <div class="tv-widget-wrap">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-          {"symbol":"TVC:DXY","width":"100%","colorTheme":"dark","isTransparent":true,"locale":"zh_TW"}
-          </script>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CDS 靜態補充表格 -->
   <div class="card">
-    <div class="card-label">📋 國家 5年期 CDS 參考值（靜態，每日手動更新）</div>
-    <table class="alert-table">
+    <table class="a-table">
       <thead><tr><th>國家</th><th>5年CDS</th><th>漲跌幅</th><th>狀態</th></tr></thead>
       <tbody id="cdsBody"></tbody>
     </table>
     <div style="margin-top:10px;font-size:11px;color:var(--text3)">
-      📌 CDS 即時資料需 Bloomberg/Refinitiv 訂閱。如需自動更新，可參考
-      <a href="https://www.worldgovernmentbonds.com/sovereign-cds/" target="_blank" style="color:var(--accent)">worldgovernmentbonds.com</a>
+      📌 CDS 即時資料來源：<a href="https://www.worldgovernmentbonds.com/sovereign-cds/" target="_blank" style="color:var(--accent)">worldgovernmentbonds.com</a>（需後端爬蟲，目前顯示示範值）
     </div>
   </div>
 
-  <!-- ═══════════════════════════════
-       SECTION 4: AI 每日摘要
-  ═══════════════════════════════ -->
+  <!-- ═══ SECTION 4: AI 摘要 ═══ -->
   <div class="section-head"><span>🤖</span><span class="section-head-text">AI 每日摘要</span></div>
-  <div class="ai-card">
-    <div class="ai-content" id="aiSummary"><span class="spinner"></span> 生成中...</div>
-  </div>
+  <div class="ai-card"><div class="ai-body" id="aiBody"><span class="spin"></span> 生成中...</div></div>
 
-  <!-- ═══════════════════════════════
-       SECTION 5: 今日新聞
-  ═══════════════════════════════ -->
+  <!-- ═══ SECTION 5: 新聞 ═══ -->
   <div class="section-head">
     <span>📰</span><span class="section-head-text">今日財經新聞</span>
-    <span class="section-count" id="newsCount"></span>
+    <span class="section-count" id="newsCount" style="margin-left:4px"></span>
   </div>
+  <div id="newsSection"><div class="state"><span class="spin"></span> 載入中...</div></div>
 
-  <!-- TradingView News Widget -->
-  <div class="card" style="padding:0;overflow:hidden;">
-    <div class="tradingview-widget-container" style="height:400px;">
-      <div class="tradingview-widget-container__widget" style="height:100%;"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-      {
-        "feedMode": "market",
-        "market": "stock",
-        "isTransparent": true,
-        "displayMode": "regular",
-        "width": "100%",
-        "height": 400,
-        "colorTheme": "dark",
-        "locale": "zh_TW"
-      }
-      </script>
-    </div>
-  </div>
-
-  <!-- 補充 RSS 新聞 -->
-  <div id="newsSection"><div class="state-msg">⏳ 載入中文財經新聞...</div></div>
-
-</div><!-- /page -->
+</div>
 
 <script>
 /* ══ CONFIG ══ */
 const CONFIG = {
-  CLAUDE_KEY: "",  // 選填：填入後 AI 摘要自動生成（否則顯示靜態示範）
+  CLAUDE_KEY: "",   // 選填，填入後 AI 自動生成
 };
+
+/* ══ Yahoo Finance via CORS proxy ══
+   依序嘗試多個 proxy，第一個成功就用
+*/
+const PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+
+async function yahooFetch(symbol, range='5d', interval='1d') {
+  const yhUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}&includePrePost=false`;
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(yhUrl), {signal: AbortSignal.timeout(8000)});
+      if (!res.ok) continue;
+      const json = await res.json();
+      const result = json?.chart?.result?.[0];
+      if (!result) continue;
+      const closes = result.indicators?.quote?.[0]?.close?.filter(v => v != null) ?? [];
+      if (!closes.length) continue;
+      const curr = closes[closes.length - 1];
+      const prev = closes.length > 1 ? closes[closes.length - 2] : null;
+      const meta = result.meta ?? {};
+      return {
+        curr: parseFloat(curr.toFixed(4)),
+        prev: prev ? parseFloat(prev.toFixed(4)) : null,
+        chgPct: prev ? ((curr - prev) / prev * 100) : null,
+        chgAbs: prev ? (curr - prev) : null,
+        name: meta.shortName || symbol,
+        symbol,
+      };
+    } catch(e) { continue; }
+  }
+  return null;
+}
+
+/* ── Symbols ── */
+const SYM = {
+  VIX:   '^VIX',
+  MOVE:  '^MOVE',
+  Y2:    '^IRX',    // 13週，用於短端（2Y用 DGS2 但無直接Yahoo代號，替代用 TNX、FVX）
+  Y2_:   'TLT',     // placeholder
+  Y10:   '^TNX',    // 10Y
+  Y30:   '^TYX',    // 30Y
+  SOX:   '^SOX',
+  NVDA:  'NVDA',
+  TSM:   'TSM',
+  SMCI:  'SMCI',
+  ARM:   'ARM',
+  TSLA:  'TSLA',
+};
+// 公債殖利率 Yahoo 代號說明：
+// ^IRX = 13週T-Bill ≈ 短端利率
+// ^FVX = 5年期
+// ^TNX = 10年期
+// ^TYX = 30年期
+// 2年期直接用 ^IRX 替代（最接近）
 
 /* ── Date Nav ── */
 let currentDate = new Date();
 function fmtD(d){ return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; }
 function fmtISO(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-
 function initDateNav(){
   document.getElementById('headerDate').textContent = fmtD(currentDate);
   const sel = document.getElementById('dateSelect');
@@ -437,9 +334,9 @@ function initDateNav(){
     const o=document.createElement('option'); o.value=fmtISO(d); o.textContent=fmtD(d);
     if(i===0)o.selected=true; sel.appendChild(o);
   }
-  sel.addEventListener('change',()=>{ currentDate=new Date(sel.value+'T12:00:00'); syncNav(); });
-  document.getElementById('prevBtn').onclick=()=>{ currentDate.setDate(currentDate.getDate()-1); syncNav(); };
-  document.getElementById('nextBtn').onclick=()=>{ if(currentDate>=new Date())return; currentDate.setDate(currentDate.getDate()+1); syncNav(); };
+  sel.onchange=()=>{ currentDate=new Date(sel.value+'T12:00:00'); syncNav(); loadAll(); };
+  document.getElementById('prevBtn').onclick=()=>{ currentDate.setDate(currentDate.getDate()-1); syncNav(); loadAll(); };
+  document.getElementById('nextBtn').onclick=()=>{ if(currentDate>=new Date())return; currentDate.setDate(currentDate.getDate()+1); syncNav(); loadAll(); };
 }
 function syncNav(){
   const iso=fmtISO(currentDate);
@@ -447,90 +344,178 @@ function syncNav(){
   for(const o of document.getElementById('dateSelect').options){if(o.value===iso){o.selected=true;break;}}
 }
 
-/* ── CDS 靜態表格 ── */
-const CDS_DATA = [
-  {name:'🇺🇸 美國5年CDS', val:37.68, chg:+0.37, status:'green'},
-  {name:'🇰🇷 韓國5年CDS', val:29.50, chg:+1.78, status:'green'},
-  {name:'🇯🇵 日本5年CDS', val:26.96, chg:+1.61, status:'red'},
-  {name:'🇨🇳 中國5年CDS', val:49.96, chg:+2.90, status:'green'},
-  {name:'🇭🇰 香港5年CDS', val:27.95, chg:+0.28, status:'green'},
-];
+/* ── Helpers ── */
+function colorCls(v, thresholds, colors){
+  for(let i=0;i<thresholds.length;i++) if(v>=thresholds[i]) return colors[i];
+  return colors[colors.length-1];
+}
+function chgHtml(pct, abs, suffix='%'){
+  if(pct==null) return '';
+  const cls = pct>0?'up':'dn';
+  const sign = pct>0?'▲':'▼';
+  if(suffix==='%') return `<span class="${cls}">${sign} ${Math.abs(pct).toFixed(2)}%</span>`;
+  return `<span class="${cls}">${sign} ${Math.abs(abs).toFixed(3)}% (${pct>0?'+':''}${pct.toFixed(2)}%)</span>`;
+}
 function dot(s){ return `<span class="dot dot-${s}"></span>`; }
-function renderCDS(){
-  document.getElementById('cdsBody').innerHTML = CDS_DATA.map(c=>`
-    <tr>
-      <td>${c.name}</td>
-      <td style="font-family:var(--mono);text-align:center">${c.val.toFixed(2)}</td>
-      <td style="text-align:center"><span class="${c.chg>=0?'up':'pos'}">${c.chg>=0?'+':''}${c.chg.toFixed(2)}</span></td>
-      <td style="text-align:center">${dot(c.status)}</td>
-    </tr>`).join('');
+function na(el, msg='無法取得'){ el.innerHTML=`<span style="color:var(--text3);font-size:14px">${msg}</span>`; }
+
+/* ── VIX ── */
+function renderVIX(d){
+  const el=document.getElementById('vixNum');
+  if(!d){ na(el); document.getElementById('vixSub').textContent='資料暫時無法取得'; return; }
+  const v=d.curr;
+  const cls = v>=30?'c-red':v>=20?'c-yellow':'c-green';
+  const lbl = v>=40?'極度恐慌':v>=30?'高度恐慌':v>=20?'警戒區間':v>=12?'市場平靜':'低波動';
+  el.className=`big-num ${cls}`; el.textContent=v.toFixed(2);
+  const sub=document.getElementById('vixSub'); sub.textContent=lbl; sub.style.color=`var(--${cls.replace('c-','')})`;
+  document.getElementById('vixChg').innerHTML=chgHtml(d.chgPct, d.chgAbs);
+  const prog=document.getElementById('vixProg'); prog.className=`prog-fill ${cls}`; prog.style.width=Math.min(100,(v/80)*100)+'%';
 }
 
-/* ── AI Summary ── */
+/* ── MOVE ── */
+function renderMOVE(d){
+  const el=document.getElementById('moveNum');
+  if(!d){ na(el); document.getElementById('moveSub').textContent='資料暫時無法取得'; return; }
+  const v=d.curr;
+  const cls=v>=120?'c-red':v>=110?'c-yellow':'c-green';
+  el.className=`big-num ${cls}`; el.textContent=v.toFixed(2);
+  const sub=document.getElementById('moveSub'); sub.textContent=v>=120?'高度警戒':v>=110?'偏高':'正常範圍'; sub.style.color=`var(--${cls.replace('c-','')})`;
+  document.getElementById('moveChg').innerHTML=chgHtml(d.chgPct, d.chgAbs);
+  const prog=document.getElementById('moveProg'); prog.className=`prog-fill ${cls}`; prog.style.width=Math.min(100,(v/160)*100)+'%';
+}
+
+/* ── 公債 ── */
+function renderYield(id, chgId, d, warnBP1, warnBP2){
+  const el=document.getElementById(id);
+  if(!d){ na(el,'—'); return; }
+  // Yahoo 殖利率單位是 % (例如 4.183)
+  el.textContent=d.curr.toFixed(3)+'%';
+  const bp = d.chgAbs ? (d.chgAbs*100) : null; // 轉為 bp
+  const bpCls = bp!=null ? (bp>=warnBP2?'up':bp>=warnBP1?'up':'dn') : '';
+  document.getElementById(chgId).innerHTML = bp!=null
+    ? `<span class="${bp>=warnBP2?'up':bp>=warnBP1?'up':'dn'}" style="font-family:var(--mono);font-size:12px">${bp>0?'+':''}${bp.toFixed(2)} bps</span>`
+    : '';
+}
+
+/* ── 利差 ── */
+function renderSpread(y10, y2){
+  const el=document.getElementById('spreadNum'), sub=document.getElementById('spreadSub');
+  if(!y10||!y2){ na(el,'—'); return; }
+  const sp = (y10.curr - y2.curr)*100;
+  const cls = sp<0?'c-red':'c-green';
+  el.className=`big-num ${cls}`; el.textContent=sp.toFixed(1);
+  sub.textContent = sp<0?'⚠️ 利率倒掛！':'正斜率（正常）';
+  sub.style.color = sp<0?'var(--red)':'var(--text3)';
+}
+
+/* ── SOX ── */
+function renderSOX(d){
+  const el=document.getElementById('soxNum');
+  if(!d){ na(el,'—'); return; }
+  el.textContent=d.curr.toLocaleString('en',{maximumFractionDigits:0});
+  document.getElementById('soxChg').innerHTML=chgHtml(d.chgPct, d.chgAbs);
+}
+
+/* ── 個股 ── */
+const STOCK_META = {
+  NVDA:{name:'輝達',    emoji:'🟢', grade:'IG1'},
+  TSM: {name:'台積電',  emoji:'🔵', grade:'IG1'},
+  SMCI:{name:'超微電腦',emoji:'⚡', grade:'HY1'},
+  ARM: {name:'安謀控股',emoji:'💻', grade:'IG1'},
+  TSLA:{name:'特斯拉',  emoji:'🚗', grade:'IG3'},
+};
+function renderStocks(results){
+  const el=document.getElementById('stocksSection');
+  const html = results.map(({sym, d})=>{
+    const m=STOCK_META[sym];
+    if(!d) return `<div class="card"><div class="card-label">${m.emoji} <strong>${sym}</strong> ${m.name}</div><div style="color:var(--text3);font-size:13px">資料暫時無法取得</div></div>`;
+    const chgCls = d.chgPct>0?'up':'dn';
+    const isHY = m.grade.startsWith('HY');
+    return `<div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div class="card-label" style="margin-bottom:6px">${m.emoji} <strong>${sym}</strong> <span style="font-weight:400;color:var(--text2)">${m.name}</span></div>
+        <div style="font-size:28px;font-weight:700;font-family:var(--mono);color:var(--text);margin-bottom:2px;">$${d.curr.toFixed(2)}</div>
+        <div class="big-chg ${chgCls}" style="font-size:13px;">${d.chgPct>0?'▲':'▼'} ${Math.abs(d.chgPct).toFixed(2)}%</div>
+      </div>
+      <div style="text-align:right;">
+        <span style="display:inline-block;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:500;${isHY?'background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#f87171':'background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#60a5fa'}">違約: ${m.grade}</span>
+      </div>
+    </div>`;
+  }).join('');
+  // 兩列佈局
+  el.innerHTML=`<div class="grid-2" style="margin-bottom:10px">${html}</div>`;
+}
+
+/* ── CDS ── */
+const CDS_STATIC=[
+  {name:'🇺🇸 美國5年CDS',val:37.68,chg:+0.37,status:'green'},
+  {name:'🇰🇷 韓國5年CDS',val:29.50,chg:+1.78,status:'green'},
+  {name:'🇯🇵 日本5年CDS',val:26.96,chg:+1.61,status:'red'},
+  {name:'🇨🇳 中國5年CDS',val:49.96,chg:+2.90,status:'green'},
+  {name:'🇭🇰 香港5年CDS',val:27.95,chg:+0.28,status:'green'},
+];
+function renderCDS(){
+  document.getElementById('cdsBody').innerHTML=CDS_STATIC.map(c=>`
+    <tr><td>${c.name}</td>
+    <td class="v-mono">${c.val.toFixed(2)}</td>
+    <td><span class="${c.chg>=0?'up':'dn'}">${c.chg>=0?'+':''}${c.chg.toFixed(2)}</span></td>
+    <td>${dot(c.status)}</td></tr>`).join('');
+}
+
+/* ── AI ── */
 function md2html(md){
   return md.replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^(\d+\.) (.+)$/gm,'<li>$2</li>')
     .replace(/(<li>.*<\/li>\n?)+/gs,m=>`<ol>${m}</ol>`).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
     .replace(/^(?!<[hol])(.*\S.*)$/gm,'<p>$1</p>').replace(/<p><\/p>/g,'');
 }
-async function generateAI(){
-  const el = document.getElementById('aiSummary');
-  const today = fmtD(currentDate);
+async function generateAI(marketVals){
+  const el=document.getElementById('aiBody');
   if(!CONFIG.CLAUDE_KEY){
-    el.innerHTML = `
-      <h2>📋 今日重點摘要（${today}）</h2>
-      <ol>
-        <li>VIX 恐慌指數即時數據由 TradingView 提供，請查看上方卡片中的即時數值與漲跌。</li>
-        <li>美國公債殖利率各期走勢請參閱各卡片即時報價。利差倒掛（10Y-2Y &lt; 0）為重要警示。</li>
-        <li>個股方面：NVDA、TSM、SMCI、ARM、TSLA 即時報價均由 TradingView 即時更新。</li>
-        <li>國家 CDS 方面，各主要市場信用風險尚在合理範圍（靜態數據，可連結至 worldgovernmentbonds.com 查閱）。</li>
-        <li>費半指數（SOX）反映半導體族群整體方向，需注意是否觸及 -3% / -6% 警示。</li>
+    const {vix, y10, y2, spread, sox} = marketVals;
+    el.innerHTML=`
+      <h2>📋 今日重點摘要</h2><ol>
+        <li>VIX 恐慌指數 <strong style="color:${vix?vix>=30?'var(--red)':vix>=20?'var(--yellow)':'var(--green)':'var(--text2)'}">${vix?vix.toFixed(2):'—'}</strong>，${vix?vix>=30?'高度恐慌，建議謹慎':vix>=20?'進入警戒區間':'市場相對平靜':'數據載入中'}。</li>
+        <li>美十年期公債殖利率 ${y10?y10.toFixed(3)+'%':'—'}，10Y-2Y 利差 ${spread?spread.toFixed(1)+' bps':'—'}${spread<0?' <strong style="color:var(--red)">（倒掛警示）</strong>':'（正常）'}。</li>
+        <li>費半指數（SOX）${sox?sox.toLocaleString('en',{maximumFractionDigits:0}):'—'}，反映半導體族群整體走勢。</li>
+        <li>國家 CDS 方面，目前各主要市場信用風險尚在合理範圍。</li>
+        <li>建議持續關注 VIX 是否突破 30 點、公債利差是否倒掛。</li>
       </ol>
-      <h2>📊 資料來源說明</h2>
-      <p>本頁所有指數與個股即時報價均嵌入自 <strong>TradingView</strong> 免費 Widget，無需任何 API Key，資料即時更新。</p>
-      <p>CDS 資料目前為靜態示範值。填入 Claude API Key 後，本區塊將自動根據最新數據生成 AI 分析摘要。</p>
-      <p style="color:var(--text3);font-size:12px;margin-top:12px">⚠️ 本頁資料僅供參考，不構成投資建議。</p>`;
+      <h2>📊 資料來源</h2>
+      <p>本頁即時數據透過 Yahoo Finance 公開 API 取得（VIX、公債殖利率、個股），每次開啟或點擊重新整理時更新。</p>
+      <p style="color:var(--text3);font-size:12px;margin-top:10px">⚠️ 填入 Claude API Key 後將自動生成 AI 市場分析。資料僅供參考，不構成投資建議。</p>`;
     return;
   }
-  el.innerHTML = '<span class="spinner"></span> AI 正在生成今日分析...';
+  el.innerHTML='<span class="spin"></span> AI 正在生成今日分析...';
   try{
-    const prompt = `今天是 ${today}。你是專業金融分析師，請用繁體中文生成金融市場每日摘要。請以 Markdown 格式分三節：\n## 📋 今日重點摘要（5條條列）\n## 📊 市場概況（2-3段）\n## 🔍 風險提示（1-2段）\n\n請著重於：VIX 恐慌指數、美債殖利率曲線、半導體族群、全球信用風險。語氣簡潔專業。`;
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':CONFIG.CLAUDE_KEY,'anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
-    });
-    const json = await res.json();
-    el.innerHTML = md2html(json.content?.[0]?.text || '生成失敗');
-  }catch(e){ el.innerHTML = `<span style="color:var(--red)">AI 摘要失敗：${e.message}</span>`; }
+    const {vix,move,y2,y10,y30,spread,sox}=marketVals;
+    const prompt=`今天是 ${fmtD(currentDate)}。請根據以下金融市場即時數據，用繁體中文生成專業的每日市場摘要：\n\nVIX: ${vix?.toFixed(2)??'N/A'}\nMOVE: ${move?.toFixed(2)??'N/A'}\n2Y公債: ${y2?.toFixed(3)??'N/A'}%\n10Y公債: ${y10?.toFixed(3)??'N/A'}%\n30Y公債: ${y30?.toFixed(3)??'N/A'}%\n10Y-2Y利差: ${spread?.toFixed(1)??'N/A'} bps\n費半SOX: ${sox?.toFixed(0)??'N/A'}\n\n請用 Markdown 分三節：\n## 📋 今日重點摘要（5條）\n## 📊 市場概況（2段）\n## 🔍 風險提示（1段）`;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CONFIG.CLAUDE_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const j=await res.json(); el.innerHTML=md2html(j.content?.[0]?.text||'生成失敗');
+  }catch(e){el.innerHTML=`<span style="color:var(--red)">AI 失敗：${e.message}</span>`;}
 }
 
-/* ── RSS 新聞 ── */
+/* ── News RSS ── */
 async function fetchNews(){
   const feeds=[
-    {name:'CNA財經', url:'https://feeds.feedburner.com/rsscna/finance'},
+    {name:'CNA財經',url:'https://feeds.feedburner.com/rsscna/finance'},
     {name:'MoneyDJ', url:'https://www.moneydj.com/KMDJ/RssFeed/GetRssFeed.djx?type=1'},
   ];
   const all=[];
   for(const f of feeds){
     try{
       const res=await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}&count=6`);
-      const dat=await res.json();
-      if(dat.items) dat.items.forEach(i=>all.push({
-        source:f.name, title:i.title,
-        desc:(i.description||'').replace(/<[^>]*>/g,'').slice(0,80)+'...',
-        time:new Date(i.pubDate).toLocaleString('zh-TW'), link:i.link,
-      }));
+      const d=await res.json();
+      if(d.items) d.items.forEach(i=>all.push({source:f.name,title:i.title,desc:(i.description||'').replace(/<[^>]*>/g,'').slice(0,80)+'...',time:new Date(i.pubDate).toLocaleString('zh-TW'),link:i.link}));
     }catch(e){}
   }
   return all.sort((a,b)=>new Date(b.time)-new Date(a.time));
 }
 function renderNews(items){
-  const el = document.getElementById('newsSection');
-  if(!items||!items.length){ el.innerHTML='<div class="state-msg">（RSS 暫時無法載入，請查看上方 TradingView 新聞）</div>'; return; }
+  if(!items?.length){ document.getElementById('newsSection').innerHTML='<div class="state">新聞暫時無法載入</div>'; return; }
   document.getElementById('newsCount').textContent=`（${items.length} 篇）`;
-  el.innerHTML = items.map(n=>`
+  document.getElementById('newsSection').innerHTML=items.map(n=>`
     <a class="news-card" href="${n.link}" target="_blank" rel="noopener">
-      <div class="news-main">
+      <div style="flex:1;min-width:0">
         <span class="news-src">${n.source}</span>
         <div class="news-title">${n.title}</div>
         <div class="news-desc">${n.desc}</div>
@@ -539,15 +524,53 @@ function renderNews(items){
     </a>`).join('');
 }
 
-/* ── Init ── */
-async function init(){
-  initDateNav();
+/* ══ MAIN ══ */
+async function loadAll(){
+  // 並行抓取所有資料
+  const [vixD, moveD, y10D, y30D, y2D, soxD,
+         nvdaD, tsmD, smciD, armD, tslaD, newsItems] = await Promise.all([
+    yahooFetch('^VIX'),
+    yahooFetch('^MOVE'),
+    yahooFetch('^TNX'),   // 10Y
+    yahooFetch('^TYX'),   // 30Y
+    yahooFetch('^FVX'),   // 5Y 作為2Y替代（Yahoo無^2YR直接代號）
+    yahooFetch('^SOX'),
+    yahooFetch('NVDA'),
+    yahooFetch('TSM'),
+    yahooFetch('SMCI'),
+    yahooFetch('ARM'),
+    yahooFetch('TSLA'),
+    fetchNews(),
+  ]);
+
+  renderVIX(vixD);
+  renderMOVE(moveD);
+  renderYield('y2Num','y2Chg', y2D, 20, 30);
+  renderYield('y10Num','y10Chg', y10D, 15, 25);
+  renderYield('y30Num','y30Chg', y30D, 15, 25);
+  renderSpread(y10D, y2D);
+  renderSOX(soxD);
+
+  renderStocks([
+    {sym:'NVDA',d:nvdaD},{sym:'TSM',d:tsmD},
+    {sym:'SMCI',d:smciD},{sym:'ARM',d:armD},{sym:'TSLA',d:tslaD}
+  ]);
+
   renderCDS();
-  generateAI();
-  const news = await fetchNews();
-  renderNews(news);
+
+  const spread = (y10D&&y2D) ? (y10D.curr - y2D.curr)*100 : null;
+  await generateAI({
+    vix:vixD?.curr, move:moveD?.curr,
+    y2:y2D?.curr, y10:y10D?.curr, y30:y30D?.curr,
+    spread, sox:soxD?.curr
+  });
+
+  renderNews(newsItems);
 }
-init();
+
+initDateNav();
+loadAll();
+setInterval(loadAll, 15*60*1000);
 </script>
 </body>
 </html>
