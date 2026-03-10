@@ -14,8 +14,6 @@
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;min-height:100vh;padding-bottom:80px;}
-
-/* Header */
 .hdr{background:rgba(13,15,23,.94);backdrop-filter:blur(12px);padding:13px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;}
 .hdr-in{max-width:740px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .hdr-icon{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#2563eb,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:15px;}
@@ -25,11 +23,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 .hdr-date{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--card2);border:1px solid var(--border);padding:3px 10px;border-radius:5px;}
 .btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;transition:all .2s;font-family:inherit;}
 .btn:hover{border-color:var(--accent);color:var(--accent);}
-
-/* Page */
 .page{max-width:740px;margin:0 auto;padding:0 12px;}
-
-/* Date nav */
 .dnav{display:flex;align-items:center;gap:8px;padding:14px 0 4px;}
 .db{background:var(--card2);border:1px solid var(--border);color:var(--text2);padding:8px 15px;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;font-family:inherit;transition:all .18s;}
 .db:hover{border-color:var(--accent);color:var(--accent);}
@@ -38,21 +32,17 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 .dw select{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 32px 8px 14px;border-radius:8px;font-size:14px;font-family:inherit;cursor:pointer;appearance:none;}
 .dw::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;font-size:11px;}
 .dnote{font-size:11px;color:var(--text3);padding:3px 0 10px;font-family:var(--mono);}
-
-/* Status bar */
 .sbar{display:flex;align-items:center;gap:8px;padding:8px 13px;background:var(--card2);border:1px solid var(--border);border-radius:8px;margin-bottom:13px;font-size:11px;font-family:var(--mono);}
 .sbar-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);animation:ag 2s infinite;flex-shrink:0;}
 .sbar-dot.err{background:var(--red);box-shadow:0 0 5px var(--red);animation:ar 1s infinite;}
 .sbar-dot.load{background:var(--yellow);box-shadow:0 0 5px var(--yellow);}
-
-/* Section */
 .sec{display:flex;align-items:center;gap:7px;padding:18px 0 10px;border-bottom:1px solid var(--border);margin-bottom:13px;}
 .sec-t{font-size:15px;font-weight:700;color:var(--accent);}
+/* ── stag：資料來源 + 資料日期 ── */
 .stag{font-size:10px;color:var(--text3);border:1px solid var(--border);padding:2px 7px;border-radius:3px;font-family:var(--mono);margin-left:2px;}
-
-/* Cards */
+.ddate{font-size:10px;color:#5a6480;border:1px solid #1e2235;background:#141720;padding:2px 7px;border-radius:3px;font-family:var(--mono);margin-left:3px;}
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:17px 15px;margin-bottom:10px;}
-.clbl{font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+.clbl{font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
 .clbl b{color:var(--text);font-size:13px;}
 .bn{font-size:52px;font-weight:700;line-height:1;font-family:var(--mono);letter-spacing:-1px;margin-bottom:3px;}
 .bn.g{color:var(--green);}.bn.y{color:var(--yellow);}.bn.r{color:var(--red);}.bn.b{color:var(--accent);}
@@ -65,12 +55,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 .wb{padding:2px 9px;border-radius:4px;font-size:11px;font-weight:500;}
 .wb1{background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.27);color:#fbbf24;}
 .wb2{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.23);color:#f87171;}
-
-/* Grids */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
-
-/* Yield card */
+/* yield card */
 .ycard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;}
 .ycard-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px;}
 .ycard-title{font-size:12px;color:var(--text2);line-height:1.7;}
@@ -95,33 +82,17 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 .yalert.warn{background:rgba(245,158,11,.09);color:var(--yellow);}
 .yalert.danger{background:rgba(239,68,68,.09);color:#f87171;}
 .yalert.na{color:var(--text3);}
-
-/* Colors */
+/* yield date tag */
+.ydate{font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:4px;}
 .c-up{color:var(--red);}.c-dn{color:var(--green);}
-
-/* Animations */
 @keyframes ag{0%,100%{box-shadow:0 0 3px var(--green)}50%{box-shadow:0 0 8px var(--green),0 0 14px rgba(34,197,94,.15)}}
 @keyframes ay{0%,100%{box-shadow:0 0 3px var(--yellow)}50%{box-shadow:0 0 8px var(--yellow),0 0 14px rgba(245,158,11,.18)}}
 @keyframes ar{0%,100%{box-shadow:0 0 4px var(--red)}50%{box-shadow:0 0 10px var(--red),0 0 16px rgba(239,68,68,.28)}}
-
-/* Stock card */
 .stkc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 15px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
 .stk-price{font-size:25px;font-weight:700;font-family:var(--mono);color:var(--text);margin:4px 0 2px;}
 .sbadge{display:inline-block;padding:3px 10px;border-radius:16px;font-size:11px;font-weight:500;}
 .sb-b{background:rgba(59,130,246,.13);border:1px solid rgba(59,130,246,.27);color:#60a5fa;}
 .sb-r{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.23);color:#f87171;}
-
-/* Table */
-.tbl{width:100%;border-collapse:collapse;}
-.tbl th{font-size:11px;color:var(--text3);padding:0 4px 8px;text-align:left;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);}
-.tbl th:not(:first-child){text-align:center;}
-.tbl td{padding:8px 4px;font-size:13px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
-.tbl td:first-child{color:var(--text);font-weight:500;}
-.tbl td:not(:first-child){text-align:center;}
-.tbl tr:last-child td{border-bottom:none;}
-.vm{font-family:var(--mono);color:var(--text);}
-
-/* AI */
 .ai-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 17px;}
 .ai-body{font-size:13.5px;line-height:1.88;color:var(--text2);}
 .ai-body h2{font-size:13.5px;font-weight:700;color:var(--text);margin:13px 0 6px;}
@@ -129,17 +100,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 .ai-body p{margin-bottom:9px;}
 .ai-body ol{padding-left:17px;}
 .ai-body li{margin-bottom:6px;}
-
-/* Spinner */
 .sp{display:inline-block;width:11px;height:11px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spi .8s linear infinite;vertical-align:middle;margin-right:5px;}
 @keyframes spi{to{transform:rotate(360deg)}}
-
 .empty{text-align:center;padding:26px;color:var(--text3);font-size:13px;}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:middle;}
-.dg{background:var(--green);box-shadow:0 0 4px var(--green);animation:ag 2s infinite;}
-.dy{background:var(--yellow);box-shadow:0 0 4px var(--yellow);animation:ay 2s infinite;}
-.dr{background:var(--red);box-shadow:0 0 4px var(--red);animation:ar 1s infinite;}
-
 @media(max-width:560px){.g2,.g3{grid-template-columns:1fr;}.bn{font-size:40px;}.yval{font-size:24px;}}
 </style>
 </head>
@@ -153,7 +116,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
     </div>
     <div class="hdr-r">
       <span class="hdr-date" id="hdrDate">—</span>
-      <button class="btn" id="refreshBtn" onclick="loadDate(selDate)">⟳ 更新</button>
+      <button class="btn" onclick="loadDate(selDate)">⟳ 更新</button>
     </div>
   </div>
 </div>
@@ -174,21 +137,27 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
   <div class="sec"><span>📡</span><span class="sec-t">預警分析</span></div>
 
   <div class="card">
-    <div class="clbl">😱 <b>VIX 恐慌指數</b> <span class="stag">FRED VIXCLS · yfinance</span></div>
+    <div class="clbl">😱 <b>VIX 恐慌指數</b>
+      <span class="stag">FRED VIXCLS · yfinance</span>
+      <span class="ddate" id="vixDate"></span>
+    </div>
     <div class="bn y" id="vixN"><span class="sp"></span></div>
     <div class="bn-lbl" id="vixL" style="color:var(--text2)">載入中...</div>
     <div class="bn-chg" id="vixC"></div>
     <div class="pbar"><div class="pf y" id="vixP" style="width:0%"></div></div>
-    <div class="wrow"><span class="wb wb1">⚠️ 警戒(L1) &gt; 20</span><span class="wb wb2">🚨 恐慌(L2) &gt; 30</span></div>
+    <div class="wrow" id="vixWrow"></div>
   </div>
 
   <div class="card">
-    <div class="clbl">📈 <b>MOVE 指數</b> <span class="stag">yfinance ^MOVE</span></div>
+    <div class="clbl">📈 <b>MOVE 指數</b>
+      <span class="stag">yfinance ^MOVE</span>
+      <span class="ddate" id="moveDate"></span>
+    </div>
     <div class="bn g" id="moveN"><span class="sp"></span></div>
     <div class="bn-lbl" id="moveL" style="color:var(--text2)">載入中...</div>
     <div class="bn-chg" id="moveC"></div>
     <div class="pbar"><div class="pf g" id="moveP" style="width:0%"></div></div>
-    <div class="wrow"><span class="wb wb1">⚠️ 警戒(L1) &gt; 110</span><span class="wb wb2">🚨 警戒(L2) &gt; 120</span></div>
+    <div class="wrow" id="moveWrow"></div>
   </div>
 
   <!-- 公債三欄 -->
@@ -200,8 +169,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       </div>
       <div class="yval" id="y2Val"><span class="sp"></span></div>
       <div class="ybp-row"><span class="ybp-big" id="y2Bp">—</span><span class="ybp-unit">bps</span><span class="ybp-pct" id="y2Pct"></span></div>
-      <div class="ythr"><span class="ythr-b ythr-1">⚠️警戒(L1)： ±20bp</span><span class="ythr-b ythr-2">🚨警戒(L2)： ±30bp</span></div>
+      <div class="ythr" id="y2Thr"></div>
       <span class="yalert na" id="y2Alert">載入中...</span>
+      <div class="ydate" id="y2Date"></div>
     </div>
     <div class="ycard">
       <div class="ycard-head">
@@ -210,8 +180,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       </div>
       <div class="yval" id="y10Val"><span class="sp"></span></div>
       <div class="ybp-row"><span class="ybp-big" id="y10Bp">—</span><span class="ybp-unit">bps</span><span class="ybp-pct" id="y10Pct"></span></div>
-      <div class="ythr"><span class="ythr-b ythr-1">⚠️警戒(L1)： ±15bp</span><span class="ythr-b ythr-2">🚨警戒(L2)： ±25bp</span></div>
+      <div class="ythr" id="y10Thr"></div>
       <span class="yalert na" id="y10Alert">載入中...</span>
+      <div class="ydate" id="y10Date"></div>
     </div>
     <div class="ycard">
       <div class="ycard-head">
@@ -220,8 +191,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       </div>
       <div class="yval" id="y30Val"><span class="sp"></span></div>
       <div class="ybp-row"><span class="ybp-big" id="y30Bp">—</span><span class="ybp-unit">bps</span><span class="ybp-pct" id="y30Pct"></span></div>
-      <div class="ythr"><span class="ythr-b ythr-1">⚠️警戒(L1)： ±15bp</span><span class="ythr-b ythr-2">🚨警戒(L2)： ±25bp</span></div>
+      <div class="ythr" id="y30Thr"></div>
       <span class="yalert na" id="y30Alert">載入中...</span>
+      <div class="ydate" id="y30Date"></div>
     </div>
   </div>
 
@@ -230,16 +202,16 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       <div class="clbl">📐 <b>10Y-2Y 利差</b></div>
       <div class="bn g" id="spN" style="font-size:38px"><span class="sp"></span></div>
       <div style="font-size:12px;color:var(--text3);margin-top:5px" id="spL">計算中...</div>
-      <div class="wrow" style="margin-top:8px"><span class="wb wb2" style="font-size:10px">🚨警戒(L2)： &lt; 0 倒掛</span></div>
+      <div class="wrow" style="margin-top:8px"><span class="wb wb2" style="font-size:10px">🚨 &lt; 0 倒掛</span></div>
     </div>
     <div class="card">
-      <div class="clbl">🔬 <b>費半指數 SOX</b> <span class="stag">yfinance ^SOX</span></div>
+      <div class="clbl">🔬 <b>費半指數 SOX</b>
+        <span class="stag">yfinance ^SOX</span>
+        <span class="ddate" id="soxDate"></span>
+      </div>
       <div class="bn b" id="soxN" style="font-size:34px"><span class="sp"></span></div>
       <div class="bn-chg" id="soxC" style="margin-top:4px;font-size:12px"></div>
-      <div class="wrow" style="margin-top:7px">
-        <span class="wb wb1" style="font-size:10px">⚠️警戒(L1)： 日跌&gt;3%</span>
-        <span class="wb wb2" style="font-size:10px">🚨警戒(L2)： 日跌&gt;6%</span>
-      </div>
+      <div class="wrow" style="margin-top:7px" id="soxWrow"></div>
     </div>
   </div>
 
@@ -259,10 +231,38 @@ const todayD  = () => { const t=new Date(); t.setHours(12,0,0,0); return t; };
 
 let selDate = todayD();
 
+/* ══ CONFIG：先用預設值，載入時從 config.json 覆蓋 ══ */
+let CFG = {
+  thresholds: {
+    vix:        { warn:20, danger:30 },
+    move:       { warn:110, danger:120 },
+    y2_bp_rise: { warn:20, danger:30 },   // 只有上升才警示
+    y10_bp_rise:{ warn:15, danger:25 },
+    y30_bp_rise:{ warn:15, danger:25 },
+    sox_drop:   { warn:-3, danger:-6 },
+  },
+  stocks: [
+    { symbol:'NVDA', name:'輝達',     emoji:'🟢', grade:'IG1' },
+    { symbol:'TSM',  name:'台積電',   emoji:'🔵', grade:'IG1' },
+    { symbol:'SMCI', name:'超微電腦', emoji:'⚡',  grade:'HY1' },
+    { symbol:'ARM',  name:'安謀控股', emoji:'💻', grade:'IG1' },
+    { symbol:'TSLA', name:'特斯拉',   emoji:'🚗', grade:'IG3' },
+  ],
+  display: { history_days:60, auto_refresh_ms:3600000 }
+};
+
+async function loadConfig() {
+  try {
+    const r = await fetch('./config.json?t=' + Date.now());
+    if (r.ok) CFG = await r.json();
+  } catch(e) { /* 使用內建預設值 */ }
+}
+
 /* ══ DATE NAV ══ */
 function initDateNav() {
   const sel = document.getElementById('dateSel'), today = todayD();
-  for (let i = 0; i < 60; i++) {
+  const days = (CFG.display?.history_days) || 60;
+  for (let i = 0; i < days; i++) {
     const d = new Date(today); d.setDate(today.getDate() - i);
     const o = document.createElement('option');
     o.value = fmtISO(d);
@@ -291,9 +291,8 @@ function refreshNav() {
 
 /* ══ STATUS BAR ══ */
 function setStatus(msg, type='load') {
-  const dot = document.getElementById('sbarDot');
   document.getElementById('sbarMsg').textContent = msg;
-  dot.className = 'sbar-dot ' + type;
+  document.getElementById('sbarDot').className = 'sbar-dot ' + type;
 }
 
 /* ══ LOAD JSON ══ */
@@ -301,10 +300,9 @@ async function loadDate(d) {
   const iso = fmtISO(d);
   const isToday = d.getTime() === todayD().getTime();
   const url = isToday ? './data/latest.json' : `./data/market_${iso}.json`;
-
   setStatus('載入中...', 'load');
   try {
-    const r = await fetch(url + '?t=' + Date.now()); // 避免快取
+    const r = await fetch(url + '?t=' + Date.now());
     if (!r.ok) throw new Error(`找不到 ${iso} 的資料（HTTP ${r.status}）`);
     const data = await r.json();
     renderAll(data);
@@ -316,40 +314,89 @@ async function loadDate(d) {
   }
 }
 
-/* ══ RENDER ══ */
+/* ══ RENDER HELPERS ══ */
 const pctHtml = pct => {
   if (pct==null) return '';
   const cl = pct>0?'c-up':'c-dn', s = pct>0?'▲':'▼';
   return `<span class="${cl}">${s} ${Math.abs(pct).toFixed(2)}%</span>`;
 };
 
-function renderBig({nId,lId,cId,pId,d,colorFn,labelFn,pMax}) {
+// 顯示資料日期的小標籤
+const dateBadge = dateStr => dateStr ? `📅 ${dateStr}` : '';
+
+/* ══ renderBig：VIX / MOVE ══ */
+function renderBig({nId,lId,cId,pId,dateId,thrId,d,colorFn,labelFn,pMax,thr}) {
   const ne = document.getElementById(nId);
-  if (!d) { ne.innerHTML='<span style="color:var(--text3);font-size:15px">無資料</span>'; if(lId)document.getElementById(lId).textContent='—'; return; }
+  if (!d) {
+    ne.innerHTML='<span style="color:var(--text3);font-size:15px">無資料</span>';
+    if(lId) document.getElementById(lId).textContent='—';
+    if(dateId) document.getElementById(dateId).textContent='';
+    return;
+  }
   const v=d.value, cl=colorFn(v);
   ne.className=`bn ${cl}`; ne.textContent=v.toFixed(2);
-  if(lId){const l=document.getElementById(lId);l.textContent=labelFn(v);l.style.color=`var(--${cl==='g'?'green':cl==='y'?'yellow':'red'})`;}
+  if(lId){ const l=document.getElementById(lId); l.textContent=labelFn(v); l.style.color=`var(--${cl==='g'?'green':cl==='y'?'yellow':'red'})`; }
   if(cId) document.getElementById(cId).innerHTML = pctHtml(d.chg_pct);
-  if(pId){const p=document.getElementById(pId);p.className=`pf ${cl}`;p.style.width=Math.min(100,(v/pMax)*100)+'%';}
+  if(pId){ const p=document.getElementById(pId); p.className=`pf ${cl}`; p.style.width=Math.min(100,(v/pMax)*100)+'%'; }
+  // ① 資料日期
+  if(dateId) document.getElementById(dateId).textContent = dateBadge(d.date);
+  // 警示標籤從 config 動態產生
+  if(thrId && thr) {
+    document.getElementById(thrId).innerHTML =
+      `<span class="wb wb1">⚠️ 警戒(L1) &gt; ${thr.warn}</span><span class="wb wb2">🚨 警戒(L2) &gt; ${thr.danger}</span>`;
+  }
 }
 
-function renderYield(pfx, d, w1, w2) {
+/* ══ renderYield：公債 ── ③ 只有上升才警示 ══ */
+function renderYield(pfx, d, thrKey) {
+  const thr = CFG.thresholds?.[thrKey] || { warn:15, danger:25 };
   const valEl=document.getElementById(pfx+'Val'), bpEl=document.getElementById(pfx+'Bp'),
         pctEl=document.getElementById(pfx+'Pct'), dotEl=document.getElementById(pfx+'Dot'),
-        altEl=document.getElementById(pfx+'Alert');
-  if (!d) { valEl.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>'; bpEl.textContent='—'; dotEl.className='ydot yd-off'; altEl.className='yalert na'; altEl.textContent='無資料'; return; }
+        altEl=document.getElementById(pfx+'Alert'), thrEl=document.getElementById(pfx+'Thr'),
+        dateEl=document.getElementById(pfx+'Date');
+
+  // 警示門檻標籤（從 config 讀）
+  if(thrEl) thrEl.innerHTML =
+    `<span class="ythr-b ythr-1">⚠️ 上升≥${thr.warn}bp</span><span class="ythr-b ythr-2">🚨 上升≥${thr.danger}bp</span>`;
+
+  if (!d) {
+    valEl.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>';
+    bpEl.textContent='—'; dotEl.className='ydot yd-off';
+    altEl.className='yalert na'; altEl.textContent='無資料';
+    if(dateEl) dateEl.textContent='';
+    return;
+  }
+
   valEl.textContent = d.value.toFixed(3)+'%';
+  // ① 資料日期
+  if(dateEl) dateEl.textContent = dateBadge(d.date);
+
   const bp = d.chg_abs != null ? d.chg_abs * 100 : null;
   if (bp != null) {
-    const abs=Math.abs(bp), s=bp>0?'+':'−', cl=bp>0?'c-up':'c-dn';
-    bpEl.innerHTML=`<span class="${cl}">${s}${abs.toFixed(2)}</span>`;
+    const cl = bp>0?'c-up':'c-dn';
+    bpEl.innerHTML=`<span class="${cl}">${bp>0?'+':''}${bp.toFixed(2)}</span>`;
     pctEl.textContent=`(${bp>0?'+':''}${d.chg_pct.toFixed(3)}%)`;
-    if      (abs>=w2) { dotEl.className='ydot yd-r'; altEl.className='yalert danger'; altEl.textContent=`🚨 ${bp>0?'上升':'下降'} ${abs.toFixed(1)} bps（門檻 ±${w2}bp）`; }
-    else if (abs>=w1) { dotEl.className='ydot yd-y'; altEl.className='yalert warn';   altEl.textContent=`⚠️ ${bp>0?'上升':'下降'} ${abs.toFixed(1)} bps（門檻 ±${w1}bp）`; }
-    else              { dotEl.className='ydot yd-g'; altEl.className='yalert ok';     altEl.textContent=`✅ 正常 ${bp>0?'+':''}${bp.toFixed(1)} bps`; }
-  } else { bpEl.textContent='—'; dotEl.className='ydot yd-off'; altEl.className='yalert na'; altEl.textContent='缺少前日數據'; }
+
+    // ③ 只有「上升」才按門檻警示；下跌一律綠燈
+    if (bp > 0 && bp >= thr.danger) {
+      dotEl.className='ydot yd-r'; altEl.className='yalert danger';
+      altEl.textContent=`🚨 上升 ${bp.toFixed(1)} bps（門檻 +${thr.danger}bp）`;
+    } else if (bp > 0 && bp >= thr.warn) {
+      dotEl.className='ydot yd-y'; altEl.className='yalert warn';
+      altEl.textContent=`⚠️ 上升 ${bp.toFixed(1)} bps（門檻 +${thr.warn}bp）`;
+    } else {
+      dotEl.className='ydot yd-g'; altEl.className='yalert ok';
+      altEl.textContent = bp > 0
+        ? `✅ 小幅上升 +${bp.toFixed(1)} bps`
+        : `✅ 下降 ${bp.toFixed(1)} bps`;
+    }
+  } else {
+    bpEl.textContent='—'; dotEl.className='ydot yd-off';
+    altEl.className='yalert na'; altEl.textContent='缺少前日數據';
+  }
 }
 
+/* ══ renderSpread ══ */
 function renderSpread(spread) {
   const ne=document.getElementById('spN'), sl=document.getElementById('spL');
   if (spread==null) { ne.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>'; sl.textContent=''; return; }
@@ -359,62 +406,79 @@ function renderSpread(spread) {
   sl.style.color = spread<0?'var(--red)':'var(--text3)';
 }
 
+/* ══ renderSOX ══ */
 function renderSOX(d) {
   const ne=document.getElementById('soxN');
+  const thr = CFG.thresholds?.sox_drop || { warn:-3, danger:-6 };
+  // 警示標籤
+  const wr = document.getElementById('soxWrow');
+  if(wr) wr.innerHTML=`<span class="wb wb1" style="font-size:10px">⚠️ 日跌&gt;${Math.abs(thr.warn)}%</span><span class="wb wb2" style="font-size:10px">🚨 日跌&gt;${Math.abs(thr.danger)}%</span>`;
+  if(document.getElementById('soxDate') && d?.date)
+    document.getElementById('soxDate').textContent = dateBadge(d.date);
   if (!d) { ne.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>'; return; }
   ne.textContent = d.value.toLocaleString('en',{maximumFractionDigits:0});
   document.getElementById('soxC').innerHTML = pctHtml(d.chg_pct);
 }
 
+/* ══ renderStocks ══ */
 function renderStocks(stocks) {
-  if (!stocks) { document.getElementById('stksWrap').innerHTML='<div class="empty">無資料</div>'; return; }
-  const order = ['NVDA','TSM','SMCI','ARM','TSLA'];
-  document.getElementById('stksWrap').innerHTML = `<div class="g2">${order.map(k => {
+  const wrap = document.getElementById('stksWrap');
+  const list = CFG.stocks || [];
+  if (!stocks || !list.length) { wrap.innerHTML='<div class="empty">無資料</div>'; return; }
+  wrap.innerHTML = `<div class="g2">${list.map(meta => {
+    const k = meta.symbol;
     const d = stocks[k];
-    const e = d?.emoji || '📈';
-    if (!d) return `<div class="stkc"><div><div class="clbl">${e} <b>${k}</b></div><div style="color:var(--text3)">無資料</div></div></div>`;
-    const cc = d.chg_pct>0?'c-up':'c-dn';
+    if (!d) return `<div class="stkc"><div><div class="clbl">${meta.emoji||'📈'} <b>${k}</b> ${meta.name||''}</div><div style="color:var(--text3)">無資料</div></div></div>`;
+    const cc = (d.chg_pct||0)>0?'c-up':'c-dn';
     return `<div class="stkc">
       <div>
-        <div class="clbl" style="margin-bottom:4px">${e} <b>${k}</b> <span style="font-weight:400;color:var(--text2)">${d.name||''}</span></div>
+        <div class="clbl" style="margin-bottom:4px">${meta.emoji||'📈'} <b>${k}</b> <span style="font-weight:400;color:var(--text2)">${meta.name||''}</span>
+          <span class="ddate">${dateBadge(d.date)}</span>
+        </div>
         <div class="stk-price">$${d.value.toFixed(2)}</div>
-        <div class="${cc}" style="font-family:var(--mono);font-size:13px;font-weight:600">${d.chg_pct>0?'▲':'▼'} ${Math.abs(d.chg_pct??0).toFixed(2)}%</div>
+        <div class="${cc}" style="font-family:var(--mono);font-size:13px;font-weight:600">${(d.chg_pct||0)>0?'▲':'▼'} ${Math.abs(d.chg_pct??0).toFixed(2)}%</div>
       </div>
-      <span class="sbadge ${(d.grade||'').startsWith('HY')?'sb-r':'sb-b'}">違約: ${d.grade||'—'}</span>
+      <span class="sbadge ${(meta.grade||'').startsWith('HY')?'sb-r':'sb-b'}">違約: ${meta.grade||'—'}</span>
     </div>`;
   }).join('')}</div>`;
 }
 
+/* ══ renderAI ══ */
 function renderAI(data) {
   const el = document.getElementById('aiBody');
   const vix = data.vix?.value, move = data.move?.value;
   const y2 = data.y2?.value, y2bp = data.y2?.chg_abs!=null?data.y2.chg_abs*100:null;
   const y10 = data.y10?.value, y10bp = data.y10?.chg_abs!=null?data.y10.chg_abs*100:null;
-  const spread = data.spread;
-  const sox = data.sox?.value;
+  const spread = data.spread, sox = data.sox?.value;
   const vCl = vix?(vix>=30?'#f87171':vix>=20?'#fbbf24':'var(--green)'):'var(--text2)';
+  const tVix = CFG.thresholds?.vix || {warn:20,danger:30};
   el.innerHTML = `<h2>📋 今日重點摘要（${fmtDisp(selDate)}）</h2><ol>
-    <li>VIX <b style="font-family:var(--mono);color:${vCl}">${vix?vix.toFixed(2):'—'}</b> — ${vix?vix>=30?'高度恐慌 🚨':vix>=20?'警戒區間 ⚠️':'市場平靜 ✅':'—'}</li>
+    <li>VIX <b style="font-family:var(--mono);color:${vCl}">${vix?vix.toFixed(2):'—'}</b> — ${vix?vix>=tVix.danger?'高度恐慌 🚨':vix>=tVix.warn?'警戒區間 ⚠️':'市場平靜 ✅':'—'}</li>
     <li>2Y公債 ${y2?y2.toFixed(3)+'%':'—'} / 日變化 <b style="font-family:var(--mono)">${y2bp!=null?(y2bp>0?'+':'')+y2bp.toFixed(2)+' bps':'—'}</b>　10Y ${y10?y10.toFixed(3)+'%':'—'} / <b style="font-family:var(--mono)">${y10bp!=null?(y10bp>0?'+':'')+y10bp.toFixed(2)+' bps':'—'}</b></li>
     <li>10Y-2Y 利差 <b style="font-family:var(--mono);color:${spread!=null&&spread<0?'#f87171':'var(--green)'}">${spread!=null?spread.toFixed(1)+' bps':'—'}</b>${spread!=null&&spread<0?' <span style="color:#f87171">⚠️ 倒掛！</span>':''}</li>
-    <li>SOX 費半 ${sox?sox.toLocaleString('en',{maximumFractionDigits:0}):'—'}　MOVE ${move?move.toFixed(2):'—'}${move?move>=120?' 🚨':move>=110?' ⚠️':' ✅':''}</li>
-    <li>公債警示燈根據當日 bp 變化動態顯示（🟢/🟡/🔴）。</li>
+    <li>SOX 費半 ${sox?sox.toLocaleString('en',{maximumFractionDigits:0}):'—'}　MOVE ${move?move.toFixed(2):'—'}${move?move>=(CFG.thresholds?.move?.danger||120)?' 🚨':move>=(CFG.thresholds?.move?.warn||110)?' ⚠️':' ✅':''}</li>
+    <li>公債警示燈：<b>上升</b>達門檻才亮黃/紅，下跌一律綠燈。</li>
   </ol>
   <h2>📊 資料來源</h2>
-  <p>由 <b>GitHub Actions</b> 每日美東收盤後自動執行 Python 腳本抓取，來源：<b>FRED</b>（VIX · 2Y/10Y/30Y 公債）· <b>yfinance</b>（MOVE · SOX · 個股），存成靜態 JSON，頁面直接讀取，速度極快。</p>
+  <p>由 <b>GitHub Actions</b> 每日美東收盤後自動執行 Python 腳本，來源：<b>FRED</b>（VIX · 2Y/10Y/30Y 公債）· <b>yfinance</b>（MOVE · SOX · 個股），存成靜態 JSON，頁面直接讀取。警示門檻與個股清單由 <b>config.json</b> 維護。</p>
   <p style="color:var(--text3);font-size:11.5px;margin-top:8px">資料僅供參考，不構成投資建議。</p>`;
 }
 
+/* ══ renderAll ══ */
 function renderAll(data) {
-  renderBig({nId:'vixN',lId:'vixL',cId:'vixC',pId:'vixP',d:data.vix,pMax:80,
-    colorFn:v=>v>=30?'r':v>=20?'y':'g',
-    labelFn:v=>v>=40?'極度恐慌':v>=30?'高度恐慌':v>=20?'警戒區間':v>=12?'市場平靜':'低波動'});
-  renderBig({nId:'moveN',lId:'moveL',cId:'moveC',pId:'moveP',d:data.move,pMax:160,
-    colorFn:v=>v>=120?'r':v>=110?'y':'g',
-    labelFn:v=>v>=120?'高度警戒':v>=110?'偏高':'正常範圍'});
-  renderYield('y2',  data.y2,  20, 30);
-  renderYield('y10', data.y10, 15, 25);
-  renderYield('y30', data.y30, 15, 25);
+  const tv = CFG.thresholds?.vix  || {warn:20,danger:30};
+  const tm = CFG.thresholds?.move || {warn:110,danger:120};
+  renderBig({nId:'vixN',lId:'vixL',cId:'vixC',pId:'vixP',dateId:'vixDate',thrId:'vixWrow',
+    d:data.vix, pMax:80, thr:tv,
+    colorFn:v=>v>=tv.danger?'r':v>=tv.warn?'y':'g',
+    labelFn:v=>v>=40?'極度恐慌':v>=tv.danger?'高度恐慌':v>=tv.warn?'警戒區間':v>=12?'市場平靜':'低波動'});
+  renderBig({nId:'moveN',lId:'moveL',cId:'moveC',pId:'moveP',dateId:'moveDate',thrId:'moveWrow',
+    d:data.move, pMax:160, thr:tm,
+    colorFn:v=>v>=tm.danger?'r':v>=tm.warn?'y':'g',
+    labelFn:v=>v>=tm.danger?'高度警戒':v>=tm.warn?'偏高':'正常範圍'});
+  renderYield('y2',  data.y2,  'y2_bp_rise');
+  renderYield('y10', data.y10, 'y10_bp_rise');
+  renderYield('y30', data.y30, 'y30_bp_rise');
   renderSpread(data.spread);
   renderSOX(data.sox);
   renderStocks(data.stocks);
@@ -422,21 +486,22 @@ function renderAll(data) {
 }
 
 function showNoData() {
-  ['vixN','moveN','soxN'].forEach(id=>{ const e=document.getElementById(id); if(e)e.innerHTML='<span style="color:var(--text3);font-size:15px">無資料</span>'; });
-  ['vixL','moveL'].forEach(id=>{ const e=document.getElementById(id); if(e)e.textContent='—'; });
-  ['y2Val','y10Val','y30Val'].forEach(id=>{ const e=document.getElementById(id); if(e)e.innerHTML='<span style="color:var(--text3)">—</span>'; });
-  ['spN'].forEach(id=>{ const e=document.getElementById(id); if(e)e.innerHTML='<span style="color:var(--text3)">—</span>'; });
+  ['vixN','moveN','soxN'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='<span style="color:var(--text3);font-size:15px">無資料</span>';});
+  ['vixL','moveL'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
+  ['y2Val','y10Val','y30Val','spN'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='<span style="color:var(--text3)">—</span>';});
   document.getElementById('stksWrap').innerHTML='<div class="empty">無資料</div>';
   document.getElementById('aiBody').innerHTML='<span style="color:var(--text3)">無資料</span>';
 }
 
 /* ══ INIT ══ */
-initDateNav();
-loadDate(selDate);
-// 今日自動每小時刷新
-setInterval(() => {
-  if (selDate.getTime() === todayD().getTime()) loadDate(selDate);
-}, 60 * 60 * 1000);
+(async () => {
+  await loadConfig();       // 先載 config，再初始化 UI
+  initDateNav();
+  loadDate(selDate);
+  setInterval(() => {
+    if (selDate.getTime() === todayD().getTime()) loadDate(selDate);
+  }, CFG.display?.auto_refresh_ms || 3600000);
+})();
 </script>
 </body>
 </html>
