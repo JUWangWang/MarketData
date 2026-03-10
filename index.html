@@ -179,7 +179,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
     <div class="bn-lbl" id="vixL" style="color:var(--text2)">載入中...</div>
     <div class="bn-chg" id="vixC"></div>
     <div class="pbar"><div class="pf y" id="vixP" style="width:0%"></div></div>
-    <div class="wrow"><span class="wb wb1">⚠️ 警戒 &gt; 20</span><span class="wb wb2">🚨 恐慌 &gt; 30</span></div>
+    <div class="wrow"><span class="wb wb1">⚠️ 警戒(L1) &gt; 20</span><span class="wb wb2">🚨 恐慌(L2) &gt; 30</span></div>
   </div>
 
   <div class="card">
@@ -188,7 +188,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
     <div class="bn-lbl" id="moveL" style="color:var(--text2)">載入中...</div>
     <div class="bn-chg" id="moveC"></div>
     <div class="pbar"><div class="pf g" id="moveP" style="width:0%"></div></div>
-    <div class="wrow"><span class="wb wb1">⚠️ 偏高 &gt; 110</span><span class="wb wb2">🚨 警戒 &gt; 120</span></div>
+    <div class="wrow"><span class="wb wb1">⚠️ 警戒(L1) &gt; 110</span><span class="wb wb2">🚨 警戒(L2) &gt; 120</span></div>
   </div>
 
   <!-- 公債三欄 -->
@@ -200,7 +200,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       </div>
       <div class="yval" id="y2Val"><span class="sp"></span></div>
       <div class="ybp-row"><span class="ybp-big" id="y2Bp">—</span><span class="ybp-unit">bps</span><span class="ybp-pct" id="y2Pct"></span></div>
-      <div class="ythr"><span class="ythr-b ythr-1">⚠️ ±20bp</span><span class="ythr-b ythr-2">🚨 ±30bp</span></div>
+      <div class="ythr"><span class="ythr-b ythr-1">⚠️警戒(L1)： ±20bp</span><span class="ythr-b ythr-2">🚨警戒(L2)： ±30bp</span></div>
       <span class="yalert na" id="y2Alert">載入中...</span>
     </div>
     <div class="ycard">
@@ -210,7 +210,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       </div>
       <div class="yval" id="y10Val"><span class="sp"></span></div>
       <div class="ybp-row"><span class="ybp-big" id="y10Bp">—</span><span class="ybp-unit">bps</span><span class="ybp-pct" id="y10Pct"></span></div>
-      <div class="ythr"><span class="ythr-b ythr-1">⚠️ ±15bp</span><span class="ythr-b ythr-2">🚨 ±25bp</span></div>
+      <div class="ythr"><span class="ythr-b ythr-1">⚠️警戒(L1)： ±15bp</span><span class="ythr-b ythr-2">🚨警戒(L2)： ±25bp</span></div>
       <span class="yalert na" id="y10Alert">載入中...</span>
     </div>
     <div class="ycard">
@@ -220,7 +220,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       </div>
       <div class="yval" id="y30Val"><span class="sp"></span></div>
       <div class="ybp-row"><span class="ybp-big" id="y30Bp">—</span><span class="ybp-unit">bps</span><span class="ybp-pct" id="y30Pct"></span></div>
-      <div class="ythr"><span class="ythr-b ythr-1">⚠️ ±15bp</span><span class="ythr-b ythr-2">🚨 ±25bp</span></div>
+      <div class="ythr"><span class="ythr-b ythr-1">⚠️警戒(L1)： ±15bp</span><span class="ythr-b ythr-2">🚨警戒(L2)： ±25bp</span></div>
       <span class="yalert na" id="y30Alert">載入中...</span>
     </div>
   </div>
@@ -230,15 +230,15 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
       <div class="clbl">📐 <b>10Y-2Y 利差</b></div>
       <div class="bn g" id="spN" style="font-size:38px"><span class="sp"></span></div>
       <div style="font-size:12px;color:var(--text3);margin-top:5px" id="spL">計算中...</div>
-      <div class="wrow" style="margin-top:8px"><span class="wb wb2" style="font-size:10px">🚨 &lt; 0 倒掛</span></div>
+      <div class="wrow" style="margin-top:8px"><span class="wb wb2" style="font-size:10px">🚨警戒(L2)： &lt; 0 倒掛</span></div>
     </div>
     <div class="card">
       <div class="clbl">🔬 <b>費半指數 SOX</b> <span class="stag">yfinance ^SOX</span></div>
       <div class="bn b" id="soxN" style="font-size:34px"><span class="sp"></span></div>
       <div class="bn-chg" id="soxC" style="margin-top:4px;font-size:12px"></div>
       <div class="wrow" style="margin-top:7px">
-        <span class="wb wb1" style="font-size:10px">⚠️ 日跌&gt;3%</span>
-        <span class="wb wb2" style="font-size:10px">🚨 日跌&gt;6%</span>
+        <span class="wb wb1" style="font-size:10px">⚠️警戒(L1)： 日跌&gt;3%</span>
+        <span class="wb wb2" style="font-size:10px">🚨警戒(L2)： 日跌&gt;6%</span>
       </div>
     </div>
   </div>
@@ -246,7 +246,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
   <div class="sec"><span>📉</span><span class="sec-t">主要個股</span><span class="stag">yfinance</span></div>
   <div id="stksWrap"><div class="empty"><span class="sp"></span> 載入中...</div></div>
 
-  <div class="sec"><span>🤖</span><span class="sec-t">AI 每日摘要</span></div>
+  <div class="sec"><span>🤖</span><span class="sec-t">每日摘要</span></div>
   <div class="ai-card"><div class="ai-body" id="aiBody"><span class="sp"></span> 載入中...</div></div>
 </div>
 
