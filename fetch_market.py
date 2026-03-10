@@ -15,7 +15,6 @@ import yfinance as yf
 import requests
 
 # ── CONFIG ──────────────────────────────────────────────────
-FRED_KEY = os.environ.get("FRED_KEY", "")
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
@@ -49,33 +48,65 @@ def make_entry(curr_val, prev_val, curr_date):
     }
 
 
-def fred_get(series_id, target_date_str, n=5):
-    """從 FRED 抓資料，找最接近 target_date 的最新值與前一值"""
-    if not FRED_KEY:
-        print(f"  ⚠️  FRED_KEY not set, skipping {series_id}")
-        return None
+def treasury_get(target_date_str):
+    """從 Treasury.gov 官方 API 抓 2Y/10Y/30Y 殖利率，無延遲、無需 API key"""
+    import xml.etree.ElementTree as ET
     d = datetime.strptime(target_date_str, "%Y-%m-%d")
-    obs_start = (d - timedelta(days=14)).strftime("%Y-%m-%d")
-    obs_end   = (d + timedelta(days=2)).strftime("%Y-%m-%d")
-    url = (
-        f"https://api.stlouisfed.org/fred/series/observations"
-        f"?series_id={series_id}&api_key={FRED_KEY}&file_type=json"
-        f"&sort_order=desc&limit={n}"
-        f"&observation_start={obs_start}&observation_end={obs_end}"
-    )
-    try:
-        r = requests.get(url, timeout=15)
-        r.raise_for_status()
-        obs = [o for o in r.json().get("observations", [])
-               if o["value"] not in (".", "") and o["date"] <= target_date_str]
-        if not obs:
-            return None
-        curr_date, curr_val = obs[0]["date"], float(obs[0]["value"])
-        prev_val = float(obs[1]["value"]) if len(obs) > 1 else None
-        return make_entry(curr_val, prev_val, curr_date)
-    except Exception as e:
-        print(f"  ❌ FRED {series_id}: {e}")
-        return None
+    # 抓當月與前一個月（確保有前日數據）
+    months = set()
+    for delta in [0, 1]:
+        m = d - timedelta(days=30*delta)
+        months.add(m.strftime("%Y%m"))
+
+    rows = []  # list of (date_str, bc_2y, bc_10y, bc_30y)
+    D = 'http://schemas.microsoft.com/ado/2007/08/dataservices'
+    M = 'http://schemas.microsoft.com/ado/2007/08/dataservices/metadata'
+    ATOM = 'http://www.w3.org/2005/Atom'
+
+    for ym in sorted(months, reverse=True):
+        url = (f"https://home.treasury.gov/resource-center/data-chart-center"
+               f"/interest-rates/pages/xml?data=daily_treasury_yield_curve"
+               f"&field_tdr_date_value_month={ym}")
+        try:
+            r = requests.get(url, timeout=20)
+            r.raise_for_status()
+            root = ET.fromstring(r.content)
+            for entry in root.findall(f'{{{ATOM}}}entry'):
+                props = entry.find(f'{{{M}}}properties')
+                if props is None:
+                    continue
+                date_el = props.find(f'{{{D}}}NEW_DATE')
+                y2_el   = props.find(f'{{{D}}}BC_2YEAR')
+                y10_el  = props.find(f'{{{D}}}BC_10YEAR')
+                y30_el  = props.find(f'{{{D}}}BC_30YEAR')
+                if date_el is None or date_el.text is None:
+                    continue
+                # Treasury 日期格式：2026-03-10T00:00:00
+                date_only = date_el.text[:10]
+                if date_only > target_date_str:
+                    continue
+                rows.append((
+                    date_only,
+                    float(y2_el.text)  if y2_el  is not None and y2_el.text  else None,
+                    float(y10_el.text) if y10_el is not None and y10_el.text else None,
+                    float(y30_el.text) if y30_el is not None and y30_el.text else None,
+                ))
+        except Exception as e:
+            print(f"  ❌ Treasury.gov {ym}: {e}")
+
+    if not rows:
+        return None, None, None
+
+    rows.sort(key=lambda x: x[0], reverse=True)
+    curr = rows[0]
+    prev = rows[1] if len(rows) > 1 else None
+
+    def mk(ci, pi):
+        cv = curr[ci]
+        pv = prev[pi] if prev else None
+        return make_entry(cv, pv, curr[0]) if cv is not None else None
+
+    return mk(1,1), mk(2,2), mk(3,3)  # y2, y10, y30
 
 
 def yf_get(symbol, target_date_str):
@@ -122,16 +153,15 @@ def fetch_all(target):
     result["move"] = d
     print(f"  {'✅' if d else '❌'} MOVE: {d['value'] if d else 'N/A'}")
 
-    # 公債殖利率 — FRED（最精準）
-    for series, key, label in [
-        ("DGS2",  "y2",  "2Y"),
-        ("DGS10", "y10", "10Y"),
-        ("DGS30", "y30", "30Y"),
-    ]:
-        print(f"📡 {label} 公債...")
-        d = fred_get(series, target)
-        result[key] = d
-        print(f"  {'✅' if d else '❌'} {label}: {d['value'] if d else 'N/A'}%")
+    # 公債殖利率 — Treasury.gov 官方 API（無延遲、無需 API key）
+    print("📡 2Y/10Y/30Y 公債（Treasury.gov）...")
+    y2, y10, y30 = treasury_get(target)
+    result["y2"]  = y2
+    result["y10"] = y10
+    result["y30"] = y30
+    print(f"  {'✅' if y2  else '❌'} 2Y:  {y2['value']  if y2  else 'N/A'}%")
+    print(f"  {'✅' if y10 else '❌'} 10Y: {y10['value'] if y10 else 'N/A'}%")
+    print(f"  {'✅' if y30 else '❌'} 30Y: {y30['value'] if y30 else 'N/A'}%")
 
     # 10Y-2Y 利差（直接計算）
     if result.get("y10") and result.get("y2"):
@@ -196,4 +226,3 @@ if __name__ == "__main__":
     for sym, s in data.get("stocks", {}).items():
         if s:
             print(f"  {sym}: ${s['value']:.2f} ({s['chg_pct']:+.2f}%)")
-
