@@ -23,7 +23,13 @@ DATA_DIR.mkdir(exist_ok=True)
 if len(sys.argv) > 1:
     TARGET = sys.argv[1]  # "2026-03-07"
 else:
-    TARGET = date.today().strftime("%Y-%m-%d")
+    # Actions 在 UTC 22:30 執行（台灣時間隔天早上）
+    # 目標是「前一個交易日」的收盤資料
+    d = date.today()
+    d -= timedelta(days=1)
+    while d.weekday() >= 5:   # 5=Saturday, 6=Sunday
+        d -= timedelta(days=1)
+    TARGET = d.strftime("%Y-%m-%d")
 
 print(f"🗓  Target date: {TARGET}")
 
@@ -192,3 +198,4 @@ if __name__ == "__main__":
     for sym, s in data.get("stocks", {}).items():
         if s:
             print(f"  {sym}: ${s['value']:.2f} ({s['chg_pct']:+.2f}%)")
+
