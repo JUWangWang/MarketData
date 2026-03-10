@@ -110,11 +110,9 @@ def fetch_all(target):
     }
     errors = []
 
-    # VIX — FRED VIXCLS（最精準）
+    # VIX — yfinance ^VIX（與 MOVE 同步，無 FRED 延遲問題）
     print("📡 VIX...")
-    d = fred_get("VIXCLS", target)
-    if d is None:  # FRED 沒有就用 yfinance
-        d = yf_get("^VIX", target)
+    d = yf_get("^VIX", target)
     result["vix"] = d
     print(f"  {'✅' if d else '❌'} VIX: {d['value'] if d else 'N/A'}")
 
