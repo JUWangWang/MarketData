@@ -357,7 +357,7 @@ function renderYield(pfx, d, thrKey) {
 
   // 警示門檻標籤（從 config 讀）
   if(thrEl) thrEl.innerHTML =
-    `<span class="ythr-b ythr-1">⚠️ 上升≥${thr.warn}bp</span><span class="ythr-b ythr-2">🚨 上升≥${thr.danger}bp</span>`;
+    `<span class="ythr-b ythr-1">⚠️警戒(L1)  上升≥${thr.warn}bp</span><span class="ythr-b ythr-2">🚨警戒(L2)  上升≥${thr.danger}bp</span>`;
 
   if (!d) {
     valEl.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>';
@@ -380,10 +380,10 @@ function renderYield(pfx, d, thrKey) {
     // ③ 只有「上升」才按門檻警示；下跌一律綠燈
     if (bp > 0 && bp >= thr.danger) {
       dotEl.className='ydot yd-r'; altEl.className='yalert danger';
-      altEl.textContent=`🚨 上升 ${bp.toFixed(1)} bps（門檻 +${thr.danger}bp）`;
+      altEl.textContent=`🚨警戒（L2） 上升 ${bp.toFixed(1)} bps（門檻 +${thr.danger}bp）`;
     } else if (bp > 0 && bp >= thr.warn) {
       dotEl.className='ydot yd-y'; altEl.className='yalert warn';
-      altEl.textContent=`⚠️ 上升 ${bp.toFixed(1)} bps（門檻 +${thr.warn}bp）`;
+      altEl.textContent=`⚠️警戒（L1） 上升 ${bp.toFixed(1)} bps（門檻 +${thr.warn}bp）`;
     } else {
       dotEl.className='ydot yd-g'; altEl.className='yalert ok';
       altEl.textContent = bp > 0
@@ -402,7 +402,7 @@ function renderSpread(spread) {
   if (spread==null) { ne.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>'; sl.textContent=''; return; }
   const cl = spread<0?'r':'g';
   ne.className=`bn ${cl}`; ne.textContent=spread.toFixed(1);
-  sl.textContent = spread<0?'bps ⚠️ 利率倒掛！':'bps（正斜率）';
+  sl.textContent = spread<0?'bps 🚨警戒（L2） 利率倒掛！':'bps（正斜率）';
   sl.style.color = spread<0?'var(--red)':'var(--text3)';
 }
 
@@ -412,7 +412,7 @@ function renderSOX(d) {
   const thr = CFG.thresholds?.sox_drop || { warn:-3, danger:-6 };
   // 警示標籤
   const wr = document.getElementById('soxWrow');
-  if(wr) wr.innerHTML=`<span class="wb wb1" style="font-size:10px">⚠️ 日跌&gt;${Math.abs(thr.warn)}%</span><span class="wb wb2" style="font-size:10px">🚨 日跌&gt;${Math.abs(thr.danger)}%</span>`;
+  if(wr) wr.innerHTML=`<span class="wb wb1" style="font-size:10px">⚠️警戒（L1） 日跌&gt;${Math.abs(thr.warn)}%</span><span class="wb wb2" style="font-size:10px">🚨警戒（L2） 日跌&gt;${Math.abs(thr.danger)}%</span>`;
   if(document.getElementById('soxDate') && d?.date)
     document.getElementById('soxDate').textContent = dateBadge(d.date);
   if (!d) { ne.innerHTML='<span style="color:var(--text3);font-size:14px">—</span>'; return; }
