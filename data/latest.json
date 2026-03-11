@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-11T12:45:28.274341Z",
+  "generated_at": "2026-03-11T14:57:53.488377Z",
   "target_date": "2026-03-10",
   "vix": {
     "value": 24.93,
@@ -9,10 +9,10 @@
     "date": "2026-03-10"
   },
   "move": {
-    "value": 76.33,
+    "value": 76.3332,
     "prev": 79.74,
-    "chg_abs": -3.409996,
-    "chg_pct": -4.2764,
+    "chg_abs": -3.406799,
+    "chg_pct": -4.2724,
     "date": "2026-03-10"
   },
   "y2": {
@@ -43,6 +43,13 @@
     "chg_abs": 54.720215,
     "chg_pct": 0.7006,
     "date": "2026-03-10"
+  },
+  "cds": {
+    "US": null,
+    "KR": null,
+    "JP": null,
+    "CN": null,
+    "HK": null
   },
   "stocks": {
     "NVDA": {
