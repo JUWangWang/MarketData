@@ -49,64 +49,65 @@ def make_entry(curr_val, prev_val, curr_date):
 
 
 def treasury_get(target_date_str):
-    """從 Treasury.gov 官方 API 抓 2Y/10Y/30Y 殖利率，無延遲、無需 API key"""
+    """從 Treasury.gov 官方 API 抓 2Y/10Y/30Y 殖利率
+    XML 結構：feed > entry > content > m:properties > d:BC_2YEAR ...
+    """
     import xml.etree.ElementTree as ET
     d = datetime.strptime(target_date_str, "%Y-%m-%d")
-    # 抓當月與前一個月（確保有前日數據）
     months = set()
-    for delta in [0, 1]:
+    for delta in [0, 1, 2]:
         m = d - timedelta(days=30*delta)
         months.add(m.strftime("%Y%m"))
 
-    rows = []  # list of (date_str, bc_2y, bc_10y, bc_30y)
-    D = 'http://schemas.microsoft.com/ado/2007/08/dataservices'
-    M = 'http://schemas.microsoft.com/ado/2007/08/dataservices/metadata'
-    ATOM = 'http://www.w3.org/2005/Atom'
+    D    = 'http://schemas.microsoft.com/ado/2007/08/dataservices'
+    M    = 'http://schemas.microsoft.com/ado/2007/08/dataservices/metadata'
+    rows = []
 
     for ym in sorted(months, reverse=True):
         url = (f"https://home.treasury.gov/resource-center/data-chart-center"
                f"/interest-rates/pages/xml?data=daily_treasury_yield_curve"
                f"&field_tdr_date_value_month={ym}")
         try:
-            r = requests.get(url, timeout=20)
+            r = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
             r.raise_for_status()
             root = ET.fromstring(r.content)
-            for entry in root.findall(f'{{{ATOM}}}entry'):
-                props = entry.find(f'{{{M}}}properties')
-                if props is None:
-                    continue
+            count = 0
+            # properties 在 entry > content > m:properties，用 iter 直接找
+            for props in root.iter(f'{{{M}}}properties'):
                 date_el = props.find(f'{{{D}}}NEW_DATE')
                 y2_el   = props.find(f'{{{D}}}BC_2YEAR')
                 y10_el  = props.find(f'{{{D}}}BC_10YEAR')
                 y30_el  = props.find(f'{{{D}}}BC_30YEAR')
-                if date_el is None or date_el.text is None:
+                if date_el is None or not date_el.text:
                     continue
-                # Treasury 日期格式：2026-03-10T00:00:00
-                date_only = date_el.text[:10]
+                date_only = date_el.text[:10]  # "2026-03-09T00:00:00" -> "2026-03-09"
                 if date_only > target_date_str:
                     continue
-                rows.append((
-                    date_only,
-                    float(y2_el.text)  if y2_el  is not None and y2_el.text  else None,
-                    float(y10_el.text) if y10_el is not None and y10_el.text else None,
-                    float(y30_el.text) if y30_el is not None and y30_el.text else None,
-                ))
+                y2v  = float(y2_el.text)  if y2_el  is not None and y2_el.text  else None
+                y10v = float(y10_el.text) if y10_el is not None and y10_el.text else None
+                y30v = float(y30_el.text) if y30_el is not None and y30_el.text else None
+                if y2v is not None:
+                    rows.append((date_only, y2v, y10v, y30v))
+                    count += 1
+            print(f"  📥 Treasury.gov {ym}: {count} 筆")
         except Exception as e:
-            print(f"  ❌ Treasury.gov {ym}: {e}")
+            print(f"  ❌ Treasury.gov {ym}: {type(e).__name__}: {e}")
 
     if not rows:
+        print("  ⚠️  Treasury.gov 無有效資料")
         return None, None, None
 
     rows.sort(key=lambda x: x[0], reverse=True)
     curr = rows[0]
     prev = rows[1] if len(rows) > 1 else None
+    print(f"  ✅ curr={curr[0]} 2Y={curr[1]} 10Y={curr[2]} 30Y={curr[3]}")
 
-    def mk(ci, pi):
-        cv = curr[ci]
-        pv = prev[pi] if prev else None
+    def mk(idx):
+        cv = curr[idx]
+        pv = prev[idx] if prev else None
         return make_entry(cv, pv, curr[0]) if cv is not None else None
 
-    return mk(1,1), mk(2,2), mk(3,3)  # y2, y10, y30
+    return mk(1), mk(2), mk(3)
 
 
 def yf_get(symbol, target_date_str):
@@ -226,3 +227,4 @@ if __name__ == "__main__":
     for sym, s in data.get("stocks", {}).items():
         if s:
             print(f"  {sym}: ${s['value']:.2f} ({s['chg_pct']:+.2f}%)")
+
