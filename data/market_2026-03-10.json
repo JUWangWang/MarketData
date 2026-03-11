@@ -36,7 +36,7 @@
     "chg_pct": 1.2712,
     "date": "2026-03-10"
   },
-  "spread": 58.0,
+  "spread": 58,
   "sox": {
     "value": 7865.1201,
     "prev": 7810.3999,
@@ -45,8 +45,24 @@
     "date": "2026-03-10"
   },
   "cds": {
-    "US": null,
-    "KR": null,
+    "US": {
+      "value": 39.52,
+      "prev": null,
+      "chg_abs": null,
+      "chg_pct": null,
+      "date": "2026-03-10",
+      "name": "美國",
+      "flag": "🇺🇸"
+    },
+    "KR": {
+      "value": 27.27,
+      "prev": null,
+      "chg_abs": null,
+      "chg_pct": null,
+      "date": "2026-03-10",
+      "name": "南韓",
+      "flag": "🇰🇷"
+    },
     "JP": null,
     "CN": null,
     "HK": null
@@ -58,8 +74,8 @@
       "chg_abs": 2.12001,
       "chg_pct": 1.1607,
       "date": "2026-03-10",
-      "name": "輝達",
-      "emoji": "🟢",
+      "name": "è¼é",
+      "emoji": "ð¢",
       "grade": "IG1"
     },
     "TSM": {
@@ -68,8 +84,8 @@
       "chg_abs": -1.610016,
       "chg_pct": -0.4617,
       "date": "2026-03-10",
-      "name": "台積電",
-      "emoji": "🔵",
+      "name": "å°ç©é»",
+      "emoji": "ðµ",
       "grade": "IG1"
     },
     "SMCI": {
@@ -78,8 +94,8 @@
       "chg_abs": -0.189999,
       "chg_pct": -0.5941,
       "date": "2026-03-10",
-      "name": "超微電腦",
-      "emoji": "⚡",
+      "name": "è¶å¾®é»è¦",
+      "emoji": "â¡",
       "grade": "HY1"
     },
     "ARM": {
@@ -88,8 +104,8 @@
       "chg_abs": 2.920006,
       "chg_pct": 2.4824,
       "date": "2026-03-10",
-      "name": "安謀控股",
-      "emoji": "💻",
+      "name": "å®è¬æ§è¡",
+      "emoji": "ð»",
       "grade": "IG1"
     },
     "TSLA": {
@@ -98,9 +114,10 @@
       "chg_abs": 0.559998,
       "chg_pct": 0.1405,
       "date": "2026-03-10",
-      "name": "特斯拉",
-      "emoji": "🚗",
+      "name": "ç¹æ¯æ",
+      "emoji": "ð",
       "grade": "IG3"
     }
-  }
+  },
+  "cds_updated_at": "2026-03-11T23:20:35.815Z"
 }
