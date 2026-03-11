@@ -821,7 +821,7 @@ async function renderTrendChart(){
    CDS 手動維護
 ══════════════════════════════════════ */
 const GH_REPO  = 'JUWangWang/MarketData';
-const GH_TOKEN = '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';
+// Token 不存在程式碼裡，從 localStorage 或輸入欄取得
 
 const CDS_LIST = [
   {key:'US', name:'美國', flag:'🇺🇸'},
@@ -870,7 +870,9 @@ function loadCDSValues(data){
   }
   // 同步 Token 輸入欄（若已存 localStorage）
   const saved = localStorage.getItem('gh_token');
-  if(saved) document.getElementById('ghToken').value = saved;
+  const inp = document.getElementById('ghToken');
+  if(saved){ inp.value = saved; inp.placeholder = '（已儲存）'; }
+  else { inp.placeholder = '首次使用請輸入 github_pat_...'; }
 }
 
 async function saveCDS(){
@@ -879,9 +881,14 @@ async function saveCDS(){
   const toast = document.getElementById('cdsSaveToast');
   const errEl = document.getElementById('cdsSaveErr');
 
-  // 取得 Token
+  // 取得 Token（優先用輸入欄，否則從 localStorage）
   const tokenInput = document.getElementById('ghToken').value.trim();
-  const token = tokenInput || GH_TOKEN;
+  const token = tokenInput || localStorage.getItem('gh_token') || '';
+  if(!token){
+    errEl.textContent = '❌ 請先輸入 GitHub Token';
+    errEl.style.display = 'inline';
+    return;
+  }
   if(tokenInput) localStorage.setItem('gh_token', tokenInput);
 
   // 收集輸入值
