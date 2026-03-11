@@ -260,11 +260,14 @@ canvas{max-height:320px;}
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;" id="cdsInputGrid">
       <!-- 動態產生 -->
     </div>
-    <div style="margin-top:12px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span style="font-size:11px;color:var(--text3);">🔑 GitHub Token</span>
-      <input id="ghToken" type="password" placeholder="github_pat_..." autocomplete="off"
-        style="flex:1;min-width:200px;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;font-family:var(--mono);">
-      <span style="font-size:11px;color:var(--text3);">Token 僅存於本機，不會上傳</span>
+    <div id="ghTokenRow" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:8px;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:12px;color:#f87171;margin-bottom:7px;">🔑 Token 驗證失敗，請重新輸入 GitHub Token</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input id="ghToken" type="password" placeholder="github_pat_..." autocomplete="off"
+          style="flex:1;min-width:200px;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:var(--mono);">
+        <button onclick="saveTokenOnly()" style="background:var(--card2);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">確認</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">Token 僅存於本機瀏覽器，不會上傳</div>
     </div>
   </div>
 
@@ -868,11 +871,7 @@ function loadCDSValues(data){
       chg.innerHTML = '';
     }
   }
-  // 同步 Token 輸入欄（若已存 localStorage）
-  const saved = localStorage.getItem('gh_token');
-  const inp = document.getElementById('ghToken');
-  if(saved){ inp.value = saved; inp.placeholder = '（已儲存）'; }
-  else { inp.placeholder = '首次使用請輸入 github_pat_...'; }
+  // Token 列平常隱藏，不需要同步顯示
 }
 
 async function saveCDS(){
@@ -881,12 +880,16 @@ async function saveCDS(){
   const toast = document.getElementById('cdsSaveToast');
   const errEl = document.getElementById('cdsSaveErr');
 
-  // 取得 Token（優先用輸入欄，否則從 localStorage）
-  const tokenInput = document.getElementById('ghToken').value.trim();
+  // 取得 Token（從 localStorage，若失敗再顯示輸入列）
+  const tokenInput = document.getElementById('ghToken')?.value.trim();
   const token = tokenInput || localStorage.getItem('gh_token') || '';
   if(!token){
-    errEl.textContent = '❌ 請先輸入 GitHub Token';
+    document.getElementById('ghTokenRow').style.display = '';
+    document.getElementById('ghToken').focus();
+    errEl.textContent = '❌ 請輸入 GitHub Token';
     errEl.style.display = 'inline';
+    btn.disabled = false;
+    btn.textContent = '💾 儲存';
     return;
   }
   if(tokenInput) localStorage.setItem('gh_token', tokenInput);
@@ -964,8 +967,19 @@ async function saveCDS(){
 
     if(!putResp.ok){
       const err = await putResp.json();
-      throw new Error(err.message || `HTTP ${putResp.status}`);
+      const msg = err.message || `HTTP ${putResp.status}`;
+      // 401/403 = Token 問題，顯示輸入列
+      if(putResp.status === 401 || putResp.status === 403 || msg.toLowerCase().includes('credential')){
+        document.getElementById('ghTokenRow').style.display = '';
+        document.getElementById('ghToken').value = '';
+        document.getElementById('ghToken').focus();
+        localStorage.removeItem('gh_token');
+      }
+      throw new Error(msg);
     }
+
+    // 成功：確保 Token 列隱藏
+    document.getElementById('ghTokenRow').style.display = 'none';
 
     // 同步更新 currentData
     currentData = existingData;
@@ -988,6 +1002,14 @@ async function saveCDS(){
     btn.disabled = false;
     btn.textContent = '💾 儲存';
   }
+}
+
+function saveTokenOnly(){
+  const v = document.getElementById('ghToken').value.trim();
+  if(v){ localStorage.setItem('gh_token', v); }
+  document.getElementById('ghTokenRow').style.display = 'none';
+  // 重新嘗試儲存
+  saveCDS();
 }
 
 /* ══ INIT ══ */
