@@ -130,6 +130,15 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 .sb-b{background:rgba(59,130,246,.13);border:1px solid rgba(59,130,246,.27);color:#60a5fa;}
 .sb-r{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.23);color:#f87171;}
 
+/* ── CDS input ── */
+.cds-inp-wrap{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:11px 12px;}
+.cds-inp-wrap label{font-size:11px;color:var(--text2);display:block;margin-bottom:5px;}
+.cds-inp-flag{font-size:15px;margin-right:4px;}
+.cds-inp{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:14px;font-family:var(--mono);text-align:center;transition:border-color .2s;}
+.cds-inp:focus{outline:none;border-color:var(--accent);}
+.cds-inp.has-val{border-color:#2a3f60;color:var(--accent);}
+.cds-chg{font-size:11px;text-align:center;margin-top:4px;font-family:var(--mono);height:16px;}
+
 /* ── Email button ── */
 .email-bar{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin:18px 0 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
 .email-bar-l{font-size:13px;color:var(--text2);}
@@ -235,6 +244,28 @@ canvas{max-height:320px;}
         <tr><td colspan="5" class="empty"><span class="sp"></span> 載入中...</td></tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- 主權 CDS 手動維護 -->
+  <div class="sec"><span>🌏</span><span class="sec-t">主要國家資訊</span><span class="stag">手動維護</span></div>
+  <div class="mon-card" style="padding:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--text2);">5年期主權 CDS（bps）· 對應日期：<span id="cdsDateLabel" style="color:var(--accent);font-family:var(--mono);"></span></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="cdsSaveToast" style="display:none;font-size:12px;color:var(--green);font-family:var(--mono);">✅ 已儲存！</span>
+        <span id="cdsSaveErr" style="display:none;font-size:12px;color:var(--red);font-family:var(--mono);"></span>
+        <button class="copy-btn" id="cdsSaveBtn" onclick="saveCDS()" style="padding:7px 16px;font-size:12px;">💾 儲存</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;" id="cdsInputGrid">
+      <!-- 動態產生 -->
+    </div>
+    <div style="margin-top:12px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:11px;color:var(--text3);">🔑 GitHub Token</span>
+      <input id="ghToken" type="password" placeholder="github_pat_..." autocomplete="off"
+        style="flex:1;min-width:200px;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;font-family:var(--mono);">
+      <span style="font-size:11px;color:var(--text3);">Token 僅存於本機，不會上傳</span>
+    </div>
   </div>
 
   <!-- 產信件按鈕 -->
@@ -393,11 +424,13 @@ async function loadDate(d){
     const data=await r.json();
     currentData=data;
     renderAll(data);
+    loadCDSValues(data);
     const gen=data.generated_at?new Date(data.generated_at).toLocaleString('zh-TW'):'—';
     setStatus(`✅ 資料更新時間：${gen}`,'ok');
   }catch(e){
     setStatus(`❌ ${e.message}`,'err');
     showNoData();
+    loadCDSValues(null);
   }
 }
 
@@ -784,9 +817,176 @@ async function renderTrendChart(){
   });
 }
 
+/* ══════════════════════════════════════
+   CDS 手動維護
+══════════════════════════════════════ */
+const GH_REPO  = 'JUWangWang/MarketData';
+const GH_TOKEN = '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';
+
+const CDS_LIST = [
+  {key:'US', name:'美國', flag:'🇺🇸'},
+  {key:'KR', name:'南韓', flag:'🇰🇷'},
+  {key:'JP', name:'日本', flag:'🇯🇵'},
+  {key:'CN', name:'中國', flag:'🇨🇳'},
+  {key:'HK', name:'香港', flag:'🇭🇰'},
+];
+
+function initCDSGrid(){
+  const grid = document.getElementById('cdsInputGrid');
+  grid.innerHTML = CDS_LIST.map(c=>`
+    <div class="cds-inp-wrap">
+      <label><span class="cds-inp-flag">${c.flag}</span>${c.name} CDS (bps)</label>
+      <input class="cds-inp" id="cds_${c.key}" type="number" step="0.1" min="0" placeholder="—"
+        oninput="this.classList.toggle('has-val',!!this.value)">
+      <div class="cds-chg" id="cds_chg_${c.key}"></div>
+    </div>
+  `).join('');
+}
+
+function loadCDSValues(data){
+  // 從已載入的 JSON 帶出 CDS 數值
+  document.getElementById('cdsDateLabel').textContent = fmtISO(selDate);
+  for(const c of CDS_LIST){
+    const inp = document.getElementById('cds_'+c.key);
+    const chg = document.getElementById('cds_chg_'+c.key);
+    if(!inp) continue;
+    const entry = data?.cds?.[c.key];
+    if(entry && entry.value){
+      inp.value = entry.value;
+      inp.classList.add('has-val');
+      // 顯示漲跌
+      if(entry.chg_abs != null){
+        const sign = entry.chg_abs > 0 ? '+' : '';
+        const cl   = entry.chg_abs > 0 ? 'c-up' : entry.chg_abs < 0 ? 'c-dn' : 'c-neu';
+        chg.innerHTML = `<span class="${cl}">${sign}${entry.chg_abs.toFixed(1)} bps</span>`;
+      } else {
+        chg.innerHTML = '';
+      }
+    } else {
+      inp.value = '';
+      inp.classList.remove('has-val');
+      chg.innerHTML = '';
+    }
+  }
+  // 同步 Token 輸入欄（若已存 localStorage）
+  const saved = localStorage.getItem('gh_token');
+  if(saved) document.getElementById('ghToken').value = saved;
+}
+
+async function saveCDS(){
+  const iso = fmtISO(selDate);
+  const btn = document.getElementById('cdsSaveBtn');
+  const toast = document.getElementById('cdsSaveToast');
+  const errEl = document.getElementById('cdsSaveErr');
+
+  // 取得 Token
+  const tokenInput = document.getElementById('ghToken').value.trim();
+  const token = tokenInput || GH_TOKEN;
+  if(tokenInput) localStorage.setItem('gh_token', tokenInput);
+
+  // 收集輸入值
+  const newCDS = {};
+  for(const c of CDS_LIST){
+    const v = parseFloat(document.getElementById('cds_'+c.key).value);
+    if(!isNaN(v) && v > 0){
+      // 計算 chg_abs（與現有 prev 比較）
+      const existing = currentData?.cds?.[c.key];
+      const prev = existing?.prev ?? null;
+      newCDS[c.key] = {
+        value:    Math.round(v * 100) / 100,
+        prev:     prev,
+        chg_abs:  prev != null ? Math.round((v - prev) * 100) / 100 : null,
+        chg_pct:  prev != null ? Math.round((v - prev) / prev * 10000) / 100 : null,
+        date:     iso,
+        name:     c.name,
+        flag:     c.flag,
+      };
+    } else {
+      newCDS[c.key] = null;
+    }
+  }
+
+  // 準備寫入的 JSON（合併到現有 data）
+  const isToday = selDate.getTime() === todayD().getTime();
+  const filePath = isToday ? 'data/latest.json' : `data/market_${iso}.json`;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 儲存中...';
+  errEl.style.display = 'none';
+
+  try{
+    // Step 1: 取得現有檔案的 SHA（GitHub API 需要）
+    const getUrl = `https://api.github.com/repos/${GH_REPO}/contents/${filePath}`;
+    const getResp = await fetch(getUrl, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+    });
+
+    let sha = null, existingData = currentData ? {...currentData} : { target_date: iso };
+
+    if(getResp.ok){
+      const meta = await getResp.json();
+      sha = meta.sha;
+      // 解碼現有內容
+      try{
+        const decoded = atob(meta.content.replace(/\n/g,''));
+        existingData = JSON.parse(decoded);
+      }catch(e){}
+    }
+
+    // 合併 CDS
+    existingData.cds = newCDS;
+    existingData.cds_updated_at = new Date().toISOString();
+
+    // Step 2: 同時也要更新 latest.json（如果存的是歷史檔）
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(existingData, null, 2))));
+    const putBody = {
+      message: `Manual CDS update: ${iso}`,
+      content,
+      ...(sha ? { sha } : {})
+    };
+
+    const putResp = await fetch(getUrl, {
+      method: 'PUT',
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(putBody)
+    });
+
+    if(!putResp.ok){
+      const err = await putResp.json();
+      throw new Error(err.message || `HTTP ${putResp.status}`);
+    }
+
+    // 同步更新 currentData
+    currentData = existingData;
+
+    // 如果是歷史日期也更新 latest.json（若 target_date 相符）
+    if(!isToday && existingData.target_date === iso){
+      // 不自動覆蓋 latest，避免誤更新
+    }
+
+    toast.style.display = 'inline';
+    setTimeout(()=>toast.style.display='none', 3000);
+
+    // 重新渲染 CDS 欄位
+    loadCDSValues(currentData);
+
+  }catch(e){
+    errEl.textContent = `❌ ${e.message}`;
+    errEl.style.display = 'inline';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 儲存';
+  }
+}
+
 /* ══ INIT ══ */
 (async()=>{
   await loadConfig();
+  initCDSGrid();
   initDateNav();
   loadDate(selDate);
   setInterval(()=>{ if(selDate.getTime()===todayD().getTime()) loadDate(selDate); }, CFG.display?.auto_refresh_ms||3600000);
