@@ -198,12 +198,12 @@ canvas{max-height:320px;}
 
 <!-- Tabs -->
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('monitor',this)">📊 今日監控</button>
+  <button class="tab active" onclick="switchTab('monitor',this)">📊 每日監控</button>
   <button class="tab" onclick="switchTab('trend',this)">📈 趨勢圖</button>
   <button class="tab" onclick="switchTab('settings',this)">⚙️ 設定</button>
 </div>
 
-<!-- ══════════ TAB 1：今日監控 ══════════ -->
+<!-- ══════════ TAB 1：每日監控 ══════════ -->
 <div id="tab-monitor" class="tab-content active">
 <div class="page">
   <div class="dnav">
@@ -505,7 +505,7 @@ async function loadDate(d){
     renderAll(data);
     loadCDSValues(data);
     const gen=data.generated_at?new Date(data.generated_at).toLocaleString('zh-TW'):'—';
-    setStatus(`✅ 資料更新時間：${gen}`,'ok');
+    setStatus(`資料更新時間：${gen}`,'ok');
   }catch(e){
     setStatus(`❌ ${e.message}`,'err');
     showNoData();
@@ -759,7 +759,7 @@ function renderSummary(data){
   if(tags.length){
     tgs.innerHTML = tags.map(t=>`<span class="sum-tag ${t.cl}">${t.label}</span>`).join('');
   } else {
-    tgs.innerHTML = '<span style="font-size:12px;color:var(--text3);">所有指標正常，無異常訊號</span>';
+    tgs.innerHTML = '<span style="font-size:12px;color:var(--text3);">🟢 所有指標正常，無異常訊號</span>';
   }
   card.style.display = '';
 }
@@ -912,7 +912,7 @@ function buildEmailHTML(){
   </tr>
   ${cdsRows}
 </table>
-<br><p style="font-family:sans-serif;font-size:11px;color:#888;">資料來源：Treasury.gov / yfinance｜CDS 為手動維護｜僅供參考，不構成投資建議</p>`;
+<br><p style="font-family:sans-serif;font-size:11px;color:#888;">資料來源：Treasury.gov / yfinance｜CDS 為手動維護｜</p>`;
 }
 
 function downloadEML(){
