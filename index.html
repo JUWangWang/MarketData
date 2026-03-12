@@ -48,11 +48,21 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-seri
 .dnote{font-size:11px;color:var(--text3);padding:3px 0 10px;font-family:var(--mono);}
 
 /* ── Status bar ── */
-.sbar{display:flex;align-items:center;gap:8px;padding:8px 13px;background:var(--card2);border:1px solid var(--border);border-radius:8px;margin-bottom:13px;font-size:11px;font-family:var(--mono);}
+.sbar{display:flex;align-items:center;gap:8px;padding:4px 0 10px;font-size:11px;font-family:var(--mono);color:var(--text3);}
 .sbar-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .sbar-dot.ok{background:var(--green);box-shadow:0 0 5px var(--green);animation:ag 2s infinite;}
 .sbar-dot.err{background:var(--red);box-shadow:0 0 5px var(--red);animation:ar 1s infinite;}
 .sbar-dot.load{background:var(--yellow);box-shadow:0 0 5px var(--yellow);}
+
+/* ── Summary card ── */
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:13px;}
+.sum-headline{font-size:14px;font-weight:700;margin-bottom:10px;}
+.sum-headline.g{color:var(--green);}.sum-headline.y{color:var(--yellow);}.sum-headline.r{color:var(--red);}
+.sum-tags{display:flex;flex-wrap:wrap;gap:7px;}
+.sum-tag{padding:4px 11px;border-radius:16px;font-size:12px;font-family:var(--mono);}
+.sum-tag.g{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--green);}
+.sum-tag.y{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:#fbbf24;}
+.sum-tag.r{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171;}
 
 /* ── Section ── */
 .sec{display:flex;align-items:center;gap:7px;padding:18px 0 10px;border-bottom:1px solid var(--border);margin-bottom:13px;}
@@ -206,6 +216,12 @@ canvas{max-height:320px;}
   <div class="sbar">
     <div class="sbar-dot load" id="sbarDot"></div>
     <span id="sbarMsg">載入中...</span>
+  </div>
+
+  <!-- 當日重點摘要 -->
+  <div class="sum-card" id="summaryCard" style="display:none;">
+    <div class="sum-headline" id="sumHeadline"></div>
+    <div class="sum-tags" id="sumTags"></div>
   </div>
 
   <!-- 預警分析表格 -->
@@ -669,13 +685,94 @@ function renderStkTable(data){
   document.getElementById('stkTbody').innerHTML=rows.join('');
 }
 
+/* ══ BUILD SUMMARY ══ */
+function buildSummary(data){
+  const tv  = CFG.thresholds?.vix      || {warn:20,  danger:30};
+  const tm  = CFG.thresholds?.move     || {warn:110, danger:120};
+  const ts  = CFG.thresholds?.sox_drop || {warn:-3,  danger:-6};
+  const CDS_THR = {US:45,KR:30,JP:25,CN:70,HK:35};
+  const CDS_NAMES = {US:'美國',KR:'南韓',JP:'日本',CN:'中國',HK:'香港'};
+
+  const tags = []; // {label, cl}
+  let maxLevel = 'g'; // g / y / r
+  const bump = lv => { if(lv==='r') maxLevel='r'; else if(lv==='y'&&maxLevel==='g') maxLevel='y'; };
+
+  // VIX
+  if(data.vix){
+    const v=data.vix.value;
+    const cl=v>=tv.danger?'r':v>=tv.warn?'y':null;
+    if(cl){ bump(cl); tags.push({label:`VIX ${v.toFixed(2)}`,cl}); }
+  }
+  // MOVE
+  if(data.move){
+    const v=data.move.value;
+    const cl=v>=tm.danger?'r':v>=tm.warn?'y':null;
+    if(cl){ bump(cl); tags.push({label:`MOVE ${v.toFixed(2)}`,cl}); }
+  }
+  // 公債 BP 上升
+  for(const [key,short,w1,w2] of [['y2','2Y',20,30],['y10','10Y',15,25],['y30','30Y',15,25]]){
+    const yd=data[key]; if(!yd||yd.chg_abs==null) continue;
+    const bp=yd.chg_abs*100;
+    const cl=bp>0&&bp>=w2?'r':bp>0&&bp>=w1?'y':null;
+    if(cl){ bump(cl); tags.push({label:`${short}公債 +${bp.toFixed(1)}BP`,cl}); }
+  }
+  // 利差倒掛
+  if(data.spread!=null&&data.spread<0){
+    bump('r'); tags.push({label:`利差倒掛 ${data.spread.toFixed(1)}bps`,cl:'r'});
+  }
+  // 費半
+  if(data.sox){
+    const pct=data.sox.chg_pct||0;
+    const cl=pct<=ts.danger?'r':pct<=ts.warn?'y':null;
+    if(cl){ bump(cl); tags.push({label:`費半 ${pct.toFixed(2)}%`,cl}); }
+  }
+  // CDS
+  if(data.cds){
+    for(const [k,name] of Object.entries(CDS_NAMES)){
+      const entry=data.cds[k]; if(!entry||!entry.value) continue;
+      if(entry.value>=CDS_THR[k]){ bump('r'); tags.push({label:`${name} CDS ${entry.value.toFixed(1)}`,cl:'r'}); }
+    }
+  }
+
+  const headlineMap = {
+    g:['🟢 市場平穩，所有指標正常'],
+    y:['🟡 市場偏謹慎，請留意以下指標'],
+    r:['🔴 市場出現警示，請注意以下指標'],
+  };
+  // 多個紅燈
+  const redCount = tags.filter(t=>t.cl==='r').length;
+  const headline = redCount>=3 ? '🔴 市場多項警示，請密切關注' : headlineMap[maxLevel][0];
+
+  return { headline, tags, maxLevel };
+}
+
+function renderSummary(data){
+  const card = document.getElementById('summaryCard');
+  const hl   = document.getElementById('sumHeadline');
+  const tgs  = document.getElementById('sumTags');
+  if(!card) return;
+
+  const {headline, tags, maxLevel} = buildSummary(data);
+  hl.textContent = headline;
+  hl.className = `sum-headline ${maxLevel}`;
+
+  if(tags.length){
+    tgs.innerHTML = tags.map(t=>`<span class="sum-tag ${t.cl}">${t.label}</span>`).join('');
+  } else {
+    tgs.innerHTML = '<span style="font-size:12px;color:var(--text3);">所有指標正常，無異常訊號</span>';
+  }
+  card.style.display = '';
+}
+
 /* ══ RENDER ALL ══ */
 function renderAll(data){
+  renderSummary(data);
   renderMonTable(data);
   renderStkTable(data);
   renderCDSTable(data);
 }
 function showNoData(){
+  const card=document.getElementById('summaryCard'); if(card) card.style.display='none';
   document.getElementById('monTbody').innerHTML='<tr><td colspan="6" class="empty">無資料</td></tr>';
   document.getElementById('stkTbody').innerHTML='<tr><td colspan="5" class="empty">無資料</td></tr>';
   const ct=document.getElementById('cdsTbody'); if(ct) ct.innerHTML='<tr><td colspan="6" class="empty">無資料</td></tr>';
@@ -759,8 +856,25 @@ function buildEmailHTML(){
     }
   }
 
+  // 摘要區塊
+  const {headline, tags} = buildSummary(d);
+  const tagDotColor = t => t.cl==='r'?'#e53e3e':t.cl==='y'?'#d69e2e':'#38a169';
+  const tagBgColor  = t => t.cl==='r'?'#fff5f5':t.cl==='y'?'#fffbeb':'#f0fff4';
+  const tagBdColor  = t => t.cl==='r'?'#fed7d7':t.cl==='y'?'#fef3c7':'#c6f6d5';
+  const tagTxColor  = t => t.cl==='r'?'#c53030':t.cl==='y'?'#b7791f':'#276749';
+  const tagsHtml = tags.length
+    ? tags.map(t=>`<span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-family:monospace;background:${tagBgColor(t)};border:1px solid ${tagBdColor(t)};color:${tagTxColor(t)};margin:2px 3px 2px 0;">${t.label}</span>`).join('')
+    : `<span style="font-size:12px;color:#888;">所有指標正常，無異常訊號</span>`;
+  const hlColor = headline.startsWith('🟢')?'#276749':headline.startsWith('🟡')?'#b7791f':'#c53030';
+
   return `
 <p style="font-family:sans-serif;font-size:14px;margin-bottom:12px;">${date} 金融市場即時監控指標如下：</p>
+<table style="border-collapse:collapse;width:100%;max-width:700px;font-family:sans-serif;margin-bottom:14px;">
+  <tr><td style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;padding:12px 16px;">
+    <div style="font-size:14px;font-weight:bold;color:${hlColor};margin-bottom:8px;">${headline}</div>
+    <div>${tagsHtml}</div>
+  </td></tr>
+</table>
 <table style="border-collapse:collapse;width:100%;max-width:700px;font-family:sans-serif;">
   <tr><td colspan="6" style="${hdrStyle}">【證券】金融市場即時監控指標</td></tr>
   <tr>
