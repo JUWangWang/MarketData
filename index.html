@@ -190,6 +190,7 @@ canvas{max-height:320px;}
 <div class="tabs">
   <button class="tab active" onclick="switchTab('monitor',this)">📊 今日監控</button>
   <button class="tab" onclick="switchTab('trend',this)">📈 趨勢圖</button>
+  <button class="tab" onclick="switchTab('settings',this)">⚙️ 設定</button>
 </div>
 
 <!-- ══════════ TAB 1：今日監控 ══════════ -->
@@ -362,6 +363,41 @@ canvas{max-height:320px;}
     <canvas id="trendChart"></canvas>
     <div class="empty" id="trendEmpty" style="display:none;">資料不足，請先讓 GitHub Actions 跑幾天累積資料</div>
   </div>
+</div>
+</div>
+
+<!-- ══════════ TAB 3：設定 ══════════ -->
+<div id="tab-settings" class="tab-content">
+<div class="page" style="padding-bottom:40px;">
+  <div style="padding:14px 0 4px;"></div>
+
+  <!-- 儲存狀態列 -->
+  <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:16px;">
+    <span id="cfgSaveToast" style="display:none;font-size:12px;color:var(--green);font-family:var(--mono);">✅ 設定已儲存！</span>
+    <span id="cfgSaveErr" style="display:none;font-size:12px;color:var(--red);font-family:var(--mono);"></span>
+    <button class="copy-btn" id="cfgSaveBtn" onclick="saveConfig()" style="padding:8px 20px;">💾 儲存所有設定</button>
+  </div>
+
+  <!-- 警示門檻 -->
+  <div class="sec"><span>🚨</span><span class="sec-t">警示門檻設定</span></div>
+  <div class="mon-card" style="padding:18px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;" id="thresholdGrid"></div>
+  </div>
+
+  <!-- 個股清單 -->
+  <div class="sec" style="margin-top:8px;"><span>📈</span><span class="sec-t">個股清單</span></div>
+  <div class="mon-card" style="padding:18px;">
+    <div id="stockList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+    <button onclick="addStockRow()" style="background:var(--card2);border:1px solid var(--border);color:var(--accent);padding:7px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">＋ 新增個股</button>
+  </div>
+
+  <!-- 收件人名單 -->
+  <div class="sec" style="margin-top:8px;"><span>📧</span><span class="sec-t">每日報告收件人</span><span class="stag">.eml 自動帶入</span></div>
+  <div class="mon-card" style="padding:18px;">
+    <div id="recipientList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <button onclick="addRecipientRow()" style="background:var(--card2);border:1px solid var(--border);color:var(--accent);padding:7px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">＋ 新增收件人</button>
+  </div>
+
 </div>
 </div>
 
@@ -769,12 +805,14 @@ function downloadEML(){
   const date = fmtDisp(selDate);
   const subject = `${date} 金融市場即時監控指標`;
   const bodyHtml = buildEmailHTML();
+  const recipients = (CFG.recipients || []).join(', ');
 
   const eml = [
     'MIME-Version: 1.0',
     'Content-Type: multipart/alternative; boundary="boundary_eml"',
     `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
     'From: MarketData <marketdata@report.com>',
+    ...(recipients ? [`To: ${recipients}`] : []),
     '',
     '--boundary_eml',
     'Content-Type: text/html; charset=UTF-8',
@@ -1178,13 +1216,186 @@ function saveTokenOnly(){
   saveCDS();
 }
 
+/* ══════════════════════════════════════
+   設定維護
+══════════════════════════════════════ */
+
+const THRESHOLD_FIELDS = [
+  {key:'vix',       label:'VIX 指數',         f1:'第一警示點',f2:'第二警示點', unit:'',   k1:'warn',  k2:'danger'},
+  {key:'move',      label:'MOVE 指數',         f1:'第一警示點',f2:'第二警示點', unit:'',   k1:'warn',  k2:'danger'},
+  {key:'y2_bp_rise',label:'二年期公債(BP上升)', f1:'第一警示點',f2:'第二警示點', unit:'BP', k1:'warn',  k2:'danger'},
+  {key:'y10_bp_rise',label:'十年期公債(BP上升)',f1:'第一警示點',f2:'第二警示點', unit:'BP', k1:'warn',  k2:'danger'},
+  {key:'y30_bp_rise',label:'三十年期公債(BP上升)',f1:'第一警示點',f2:'第二警示點',unit:'BP',k1:'warn',  k2:'danger'},
+  {key:'sox_drop',  label:'費半指數(下跌%)',    f1:'第一警示點',f2:'第二警示點', unit:'%',  k1:'warn',  k2:'danger'},
+];
+
+function initSettingsPage(){
+  renderThresholdGrid();
+  renderStockList();
+  renderRecipientList();
+}
+
+// ── 警示門檻 ──
+function renderThresholdGrid(){
+  const grid = document.getElementById('thresholdGrid');
+  grid.innerHTML = THRESHOLD_FIELDS.map(f => {
+    const thr = CFG.thresholds?.[f.key] || {};
+    const v1 = thr[f.k1] ?? '';
+    const v2 = thr[f.k2] ?? '';
+    return `
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px;">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">${f.label}</div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">${f.f1}${f.unit?` (${f.unit})`:''}</div>
+          <input type="number" step="any" id="thr_${f.key}_w" value="${v1}"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:13px;font-family:var(--mono);">
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">${f.f2}${f.unit?` (${f.unit})`:''}</div>
+          <input type="number" step="any" id="thr_${f.key}_d" value="${v2}"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:13px;font-family:var(--mono);">
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function collectThresholds(){
+  const t = {};
+  for(const f of THRESHOLD_FIELDS){
+    const w = parseFloat(document.getElementById(`thr_${f.key}_w`)?.value);
+    const d = parseFloat(document.getElementById(`thr_${f.key}_d`)?.value);
+    if(!isNaN(w) && !isNaN(d)) t[f.key] = {[f.k1]:w, [f.k2]:d};
+  }
+  return t;
+}
+
+// ── 個股清單 ──
+const GRADE_OPTIONS = ['IG1','IG2','IG3','HY1','HY2','HY3'];
+const EMOJI_OPTIONS = ['🟢','🔵','⚡','💻','🚗','🔴','🟡','⭐','🏭','💊'];
+
+function renderStockList(){
+  const list = document.getElementById('stockList');
+  list.innerHTML = '';
+  (CFG.stocks || []).forEach((s, i) => addStockRow(s, i));
+}
+
+function addStockRow(s={}, idx=null){
+  const list = document.getElementById('stockList');
+  const id = idx !== null ? idx : list.children.length;
+  const div = document.createElement('div');
+  div.className = 'stock-row';
+  div.dataset.idx = id;
+  div.style.cssText = 'display:flex;gap:8px;align-items:center;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;flex-wrap:wrap;';
+  div.innerHTML = `
+    <select style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 6px;border-radius:6px;font-size:16px;" class="s-emoji">
+      ${EMOJI_OPTIONS.map(e=>`<option ${e===s.emoji?'selected':''}>${e}</option>`).join('')}
+    </select>
+    <input type="text" placeholder="代號 (如 NVDA)" value="${s.symbol||''}" class="s-symbol"
+      style="width:100px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:12px;font-family:var(--mono);">
+    <input type="text" placeholder="顯示名稱" value="${s.name||''}" class="s-name"
+      style="flex:1;min-width:100px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:12px;">
+    <select class="s-grade" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;">
+      ${GRADE_OPTIONS.map(g=>`<option ${g===s.grade?'selected':''}>${g}</option>`).join('')}
+    </select>
+    <button onclick="this.closest('.stock-row').remove()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:13px;flex-shrink:0;">✕</button>
+  `;
+  list.appendChild(div);
+}
+
+function collectStocks(){
+  return Array.from(document.querySelectorAll('.stock-row')).map(row => ({
+    symbol: row.querySelector('.s-symbol').value.trim().toUpperCase(),
+    name:   row.querySelector('.s-name').value.trim(),
+    emoji:  row.querySelector('.s-emoji').value,
+    grade:  row.querySelector('.s-grade').value,
+  })).filter(s => s.symbol);
+}
+
+// ── 收件人名單 ──
+function renderRecipientList(){
+  const list = document.getElementById('recipientList');
+  list.innerHTML = '';
+  (CFG.recipients || []).forEach(r => addRecipientRow(r));
+}
+
+function addRecipientRow(r=''){
+  const list = document.getElementById('recipientList');
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:8px;align-items:center;';
+  div.innerHTML = `
+    <input type="email" placeholder="example@company.com" value="${r}"
+      style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;font-family:var(--mono);">
+    <button onclick="this.parentElement.remove()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px;">✕</button>
+  `;
+  list.appendChild(div);
+}
+
+function collectRecipients(){
+  return Array.from(document.querySelectorAll('#recipientList input'))
+    .map(i => i.value.trim()).filter(Boolean);
+}
+
+// ── 儲存 config.json ──
+async function saveConfig(){
+  const btn = document.getElementById('cfgSaveBtn');
+  const toast = document.getElementById('cfgSaveToast');
+  const errEl = document.getElementById('cfgSaveErr');
+  btn.disabled = true; btn.textContent = '⏳ 儲存中...';
+  errEl.style.display = 'none';
+
+  const token = await getToken();
+  if(!token){
+    errEl.textContent = '❌ 無法取得 Token'; errEl.style.display='inline';
+    btn.disabled=false; btn.textContent='💾 儲存所有設定'; return;
+  }
+
+  const newCFG = {
+    ...CFG,
+    thresholds: collectThresholds(),
+    stocks:     collectStocks(),
+    recipients: collectRecipients(),
+  };
+
+  try{
+    const getUrl = `https://api.github.com/repos/${GH_REPO}/contents/config.json`;
+    const getResp = await fetch(getUrl, { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }});
+    let sha = null;
+    if(getResp.ok){ const m = await getResp.json(); sha = m.sha; }
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(newCFG, null, 2))));
+    const putResp = await fetch(getUrl, {
+      method:'PUT',
+      headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json', 'Content-Type':'application/json' },
+      body: JSON.stringify({ message:'Update config', content, ...(sha?{sha}:{}) })
+    });
+
+    if(!putResp.ok){
+      const err = await putResp.json();
+      if(putResp.status===401||putResp.status===403){ _cachedToken=null; localStorage.removeItem('gh_token'); }
+      throw new Error(err.message||`HTTP ${putResp.status}`);
+    }
+
+    // 更新本地 CFG
+    CFG = newCFG;
+    toast.style.display='inline';
+    setTimeout(()=>toast.style.display='none', 3000);
+
+  }catch(e){
+    errEl.textContent=`❌ ${e.message}`; errEl.style.display='inline';
+  }finally{
+    btn.disabled=false; btn.textContent='💾 儲存所有設定';
+  }
+}
+
 /* ══ INIT ══ */
 (async()=>{
   await loadConfig();
   initCDSGrid();
   initDateNav();
+  initSettingsPage();
   loadDate(selDate);
-  // 背景預載 Token（讓第一次按儲存時不用等）
   getToken();
   setInterval(()=>{ if(selDate.getTime()===todayD().getTime()) loadDate(selDate); }, CFG.display?.auto_refresh_ms||3600000);
 })();
