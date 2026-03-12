@@ -6,7 +6,6 @@
 <title>金融市場每日監控指標</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --bg:#0d0f17;--card:#13161f;--card2:#181b26;--border:#222537;
@@ -293,16 +292,13 @@ canvas{max-height:320px;}
   <div class="email-bar">
     <div class="email-bar-l">
       <b>📧 每日報告</b>
-      <div style="font-size:12px;margin-top:3px;">產生 .eml 信件檔，雙擊用 Outlook 直接開啟，按轉寄寄出</div>
+      <div style="font-size:12px;margin-top:3px;">產生 .eml 信件檔，雙擊用 Outlook 直接開啟寄出</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span class="copy-toast" id="copyToast">✅ 已下載！</span>
       <button class="copy-btn" onclick="downloadEML()">📩 下載每日報告</button>
     </div>
   </div>
-
-  <!-- 隱藏的截圖用表格（保留備用） -->
-  <div id="reportCapture" style="position:fixed;left:-9999px;top:0;width:780px;background:#fff;padding:24px;font-family:'Noto Sans TC',sans-serif;"></div>
 </div>
 </div>
 
@@ -785,7 +781,7 @@ function downloadEML(){
     'Content-Transfer-Encoding: base64',
     '',
     btoa(unescape(encodeURIComponent(
-      `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif;">${bodyHtml}</body></html>`
+      `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${bodyHtml}</body></html>`
     ))),
     '',
     '--boundary_eml--'
@@ -801,110 +797,6 @@ function downloadEML(){
   const t = document.getElementById('copyToast');
   t.style.display = 'inline';
   setTimeout(()=>t.style.display='none', 2500);
-}
-
-
-  if(!currentData){ alert('尚無資料'); return; }
-  const btn = document.getElementById('pngBtn');
-  btn.disabled = true; btn.textContent = '⏳ 產生中...';
-
-  const date = fmtDisp(selDate);
-  const d = currentData;
-  const tv = CFG.thresholds?.vix||{warn:20,danger:30};
-  const tm = CFG.thresholds?.move||{warn:110,danger:120};
-
-  const dot = cl => {
-    const c = cl==='r'?'#e53e3e': cl==='y'?'#d69e2e': cl==='off'?'#aaa':'#22c55e';
-    return `<span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:${c};vertical-align:middle;"></span>`;
-  };
-
-  const hdr  = 'background:#1a2b5e;color:#fff;padding:8px 12px;font-size:13px;font-weight:bold;border:1px solid #2a3f80;text-align:center;';
-  const th   = 'background:#2a3f80;color:#fff;padding:7px 10px;font-size:12px;font-weight:bold;text-align:center;border:1px solid #3a4f90;';
-  const thL  = 'background:#2a3f80;color:#fff;padding:7px 10px;font-size:12px;font-weight:bold;text-align:left;border:1px solid #3a4f90;';
-  const td   = 'padding:6px 10px;font-size:12px;border:1px solid #dde;text-align:center;';
-  const tdL  = 'padding:6px 10px;font-size:12px;border:1px solid #dde;text-align:left;';
-
-  // 預警分析列
-  let warn = '';
-  const vix = d.vix;
-  if(vix){ const v=vix.value,cl=v>=tv.danger?'r':v>=tv.warn?'y':'g'; warn+=`<tr><td style="${tdL}">VIX 指數</td><td style="${td}">${v.toFixed(2)}</td><td style="${td}">&gt;${tv.warn}</td><td style="${td}">&gt;${tv.danger}</td><td style="${td}">${v.toFixed(2)}</td><td style="${td}">${dot(cl)}</td></tr>`; }
-  const move = d.move;
-  if(move){ const v=move.value,cl=v>=tm.danger?'r':v>=tm.warn?'y':'g'; warn+=`<tr><td style="${tdL}">MOVE 指數</td><td style="${td}">${v.toFixed(2)}</td><td style="${td}">&gt;${tm.warn}</td><td style="${td}">&gt;${tm.danger}</td><td style="${td}">${v.toFixed(2)}</td><td style="${td}">${dot(cl)}</td></tr>`; }
-  for(const [key,label,w1,w2] of [['y2','二年期公債殖利率',20,30],['y10','十年期公債殖利率',15,25],['y30','三十年期公債殖利率',15,25]]){
-    const yd=d[key]; if(!yd) continue;
-    const bp=yd.chg_abs!=null?yd.chg_abs*100:null;
-    const monVal=bp!=null?`${bp>0?'+':''}${bp.toFixed(2)} bps`:'—';
-    const cl=bp!=null&&bp>0&&bp>=w2?'r':bp!=null&&bp>0&&bp>=w1?'y':'g';
-    warn+=`<tr><td style="${tdL}">${label}</td><td style="${td}">${yd.value.toFixed(3)}%</td><td style="${td}">上升${w1}BP</td><td style="${td}">上升${w2}BP</td><td style="${td}">${monVal}</td><td style="${td}">${dot(cl)}</td></tr>`;
-  }
-  if(d.spread!=null){ const sp=d.spread,cl=sp<0?'r':'g'; warn+=`<tr><td style="${tdL}">10Y-2Y 利差(bps)</td><td style="${td}">${sp.toFixed(2)}</td><td style="${td}">—</td><td style="${td}">&lt;0</td><td style="${td}">${sp.toFixed(2)} bps</td><td style="${td}">${dot(cl)}</td></tr>`; }
-  if(d.sox){ const thr=CFG.thresholds?.sox_drop||{warn:-3,danger:-6},pct=d.sox.chg_pct||0,cl=pct<=thr.danger?'r':pct<=thr.warn?'y':'g'; warn+=`<tr><td style="${tdL}">費半指數</td><td style="${td}">${d.sox.value.toLocaleString('en',{maximumFractionDigits:2})}</td><td style="${td}">下跌${Math.abs(thr.warn)}%</td><td style="${td}">下跌${Math.abs(thr.danger)}%</td><td style="${td}">${pct>0?'+':''}${pct.toFixed(2)}%</td><td style="${td}">${dot(cl)}</td></tr>`; }
-
-  // 個股列
-  let stk = '';
-  for(const meta of CFG.stocks||[]){
-    const sd=d.stocks?.[meta.symbol]; if(!sd) continue;
-    const pct=sd.chg_pct||0,cl=pct<=-6?'r':pct<=-3?'y':'g';
-    const pctColor=pct>0?'#c0392b':'#27ae60';
-    stk+=`<tr><td style="${tdL}">${meta.emoji||''} ${meta.name||meta.symbol}</td><td style="${td}">$${sd.value.toFixed(2)}</td><td style="${td};color:${pctColor}">${pct>0?'+':''}${pct.toFixed(2)}%</td><td style="${td}">${meta.grade||'—'}</td><td style="${td}">${dot(cl)}</td></tr>`;
-  }
-
-  // CDS 列
-  const CDS_THR={US:45,KR:30,JP:25,CN:70,HK:35};
-  const CDS_NAMES={US:'🇺🇸 美國',KR:'🇰🇷 南韓',JP:'🇯🇵 日本',CN:'🇨🇳 中國',HK:'🇭🇰 香港'};
-  let cdsRows='';
-  const cdsData=d.cds||{};
-  for(const [k,name] of Object.entries(CDS_NAMES)){
-    const entry=cdsData[k],thr=CDS_THR[k];
-    if(!entry||!entry.value){ cdsRows+=`<tr><td style="${tdL}">${name} 5Y CDS</td><td style="${td}" colspan="4">—</td><td style="${td}">${dot('off')}</td></tr>`; }
-    else{ const v=entry.value,cl=v>=thr?'r':'g'; cdsRows+=`<tr><td style="${tdL}">${name} 5Y CDS</td><td style="${td}">${v.toFixed(2)} bps</td><td style="${td}">—</td><td style="${td}">&gt;${thr} bps</td><td style="${td}">${v.toFixed(2)} bps</td><td style="${td}">${dot(cl)}</td></tr>`; }
-  }
-
-  const html = `
-<div style="background:#fff;padding:20px;font-family:sans-serif;">
-  <p style="font-size:14px;margin-bottom:14px;color:#222;">${date} 金融市場即時監控指標</p>
-  <table style="border-collapse:collapse;width:100%;margin-bottom:16px;">
-    <tr><td colspan="6" style="${hdr}">【證券】金融市場即時監控指標</td></tr>
-    <tr><td style="${thL}">預警分析</td><td style="${th}">實際值</td><td style="${th}">第一警示點</td><td style="${th}">第二警示點</td><td style="${th}">即時監控數值</td><td style="${th}">狀態</td></tr>
-    ${warn}
-  </table>
-  <table style="border-collapse:collapse;width:100%;margin-bottom:16px;">
-    <tr><td colspan="5" style="${hdr}">主要個股資訊</td></tr>
-    <tr><td style="${thL}">名稱</td><td style="${th}">收盤價</td><td style="${th}">漲幅(%)</td><td style="${th}">違約機率等級</td><td style="${th}">狀態</td></tr>
-    ${stk}
-  </table>
-  <table style="border-collapse:collapse;width:100%;">
-    <tr><td colspan="6" style="${hdr}">主要國家資訊（5年期主權 CDS）</td></tr>
-    <tr><td style="${thL}">國家</td><td style="${th}">實際值</td><td style="${th}">第一警示點</td><td style="${th}">第二警示點</td><td style="${th}">即時監控數值</td><td style="${th}">狀態</td></tr>
-    ${cdsRows}
-  </table>
-  <p style="font-size:10px;color:#999;margin-top:12px;">資料來源：Treasury.gov / yfinance｜CDS 為手動維護｜僅供參考，不構成投資建議</p>
-</div>`;
-
-  const capture = document.getElementById('reportCapture');
-  capture.innerHTML = html;
-
-  try{
-    const canvas = await html2canvas(capture, {
-      scale: 2,
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      logging: false
-    });
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = `market_${fmtISO(selDate)}.png`;
-    a.click();
-
-    const t = document.getElementById('copyToast');
-    t.style.display='inline';
-    setTimeout(()=>t.style.display='none', 2500);
-  }catch(e){
-    alert('截圖失敗：'+e.message);
-  }finally{
-    capture.innerHTML = '';
-    btn.disabled = false; btn.textContent = '🖼️ 下載報告圖片';
-  }
 }
 
 
