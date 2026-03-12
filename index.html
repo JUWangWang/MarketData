@@ -655,8 +655,8 @@ function buildEmailHTML(){
   const tm=CFG.thresholds?.move||{warn:110,danger:120};
 
   const hdrStyle='background:#1a2b5e;color:#ffffff;padding:8px 10px;font-size:13px;font-weight:bold;text-align:center;border:1px solid #2a3f80;';
-  const thStyle='background:#2a3f80;color:#ffffff;padding:7px 10px;font-size:12px;text-align:center;border:1px solid #3a4f90;';
-  const thLStyle='background:#2a3f80;color:#ffffff;padding:7px 10px;font-size:12px;text-align:left;border:1px solid #3a4f90;';
+  const thStyle='background:#2a3f80;color:#ffffff;padding:7px 10px;font-size:12px;font-weight:bold;text-align:center;border:1px solid #3a4f90;mso-line-height-rule:exactly;';
+  const thLStyle='background:#2a3f80;color:#ffffff;padding:7px 10px;font-size:12px;font-weight:bold;text-align:left;border:1px solid #3a4f90;mso-line-height-rule:exactly;';
   const tdStyle='padding:6px 10px;font-size:12px;border:1px solid #dde;text-align:center;';
   const tdLStyle='padding:6px 10px;font-size:12px;border:1px solid #dde;text-align:left;';
 
@@ -728,12 +728,12 @@ function buildEmailHTML(){
 <table style="border-collapse:collapse;width:100%;max-width:700px;font-family:sans-serif;">
   <tr><td colspan="6" style="${hdrStyle}">【證券】金融市場即時監控指標</td></tr>
   <tr>
-    <th style="${thLStyle}">預警分析</th>
-    <th style="${thStyle}">實際值</th>
-    <th style="${thStyle}">第一警示點</th>
-    <th style="${thStyle}">第二警示點</th>
-    <th style="${thStyle}">即時監控數值</th>
-    <th style="${thStyle}">狀態</th>
+    <td style="${thLStyle}">預警分析</td>
+    <td style="${thStyle}">實際值</td>
+    <td style="${thStyle}">第一警示點</td>
+    <td style="${thStyle}">第二警示點</td>
+    <td style="${thStyle}">即時監控數值</td>
+    <td style="${thStyle}">狀態</td>
   </tr>
   ${warn}
 </table>
@@ -741,11 +741,11 @@ function buildEmailHTML(){
 <table style="border-collapse:collapse;width:100%;max-width:700px;font-family:sans-serif;">
   <tr><td colspan="5" style="${hdrStyle}">主要個股資訊</td></tr>
   <tr>
-    <th style="${thLStyle}">名稱</th>
-    <th style="${thStyle}">收盤價</th>
-    <th style="${thStyle}">漲幅(%)</th>
-    <th style="${thStyle}">違約機率等級</th>
-    <th style="${thStyle}">狀態</th>
+    <td style="${thLStyle}">名稱</td>
+    <td style="${thStyle}">收盤價</td>
+    <td style="${thStyle}">漲幅(%)</td>
+    <td style="${thStyle}">違約機率等級</td>
+    <td style="${thStyle}">狀態</td>
   </tr>
   ${stk}
 </table>
@@ -753,12 +753,12 @@ function buildEmailHTML(){
 <table style="border-collapse:collapse;width:100%;max-width:700px;font-family:sans-serif;">
   <tr><td colspan="6" style="${hdrStyle}">主要國家資訊（5年期主權 CDS）</td></tr>
   <tr>
-    <th style="${thLStyle}">國家</th>
-    <th style="${thStyle}">實際值</th>
-    <th style="${thStyle}">第一警示點</th>
-    <th style="${thStyle}">第二警示點</th>
-    <th style="${thStyle}">即時監控數值</th>
-    <th style="${thStyle}">狀態</th>
+    <td style="${thLStyle}">國家</td>
+    <td style="${thStyle}">實際值</td>
+    <td style="${thStyle}">第一警示點</td>
+    <td style="${thStyle}">第二警示點</td>
+    <td style="${thStyle}">即時監控數值</td>
+    <td style="${thStyle}">狀態</td>
   </tr>
   ${cdsRows}
 </table>
