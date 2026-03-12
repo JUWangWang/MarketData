@@ -246,20 +246,37 @@ canvas{max-height:320px;}
     </table>
   </div>
 
-  <!-- 主權 CDS 手動維護 -->
+  <!-- 主權 CDS 表格 + 手動維護 -->
   <div class="sec"><span>🌏</span><span class="sec-t">主要國家資訊</span><span class="stag">手動維護</span></div>
+  <div class="mon-card">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead class="mon-thead">
+        <tr>
+          <th style="text-align:left;padding:10px 12px;">國家 CDS (5年期)</th>
+          <th>實際值</th>
+          <th>第一警示點</th>
+          <th>第二警示點</th>
+          <th>即時監控數值</th>
+          <th>狀態</th>
+        </tr>
+      </thead>
+      <tbody class="mon-tbody" id="cdsTbody">
+        <tr><td colspan="6" class="empty"><span class="sp"></span> 載入中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CDS 手動輸入維護 -->
   <div class="mon-card" style="padding:16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-      <div style="font-size:12px;color:var(--text2);">5年期主權 CDS（bps）· 對應日期：<span id="cdsDateLabel" style="color:var(--accent);font-family:var(--mono);"></span></div>
+      <div style="font-size:12px;color:var(--text2);">✏️ 手動維護 CDS 數值 · 對應日期：<span id="cdsDateLabel" style="color:var(--accent);font-family:var(--mono);"></span></div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span id="cdsSaveToast" style="display:none;font-size:12px;color:var(--green);font-family:var(--mono);">✅ 已儲存！</span>
         <span id="cdsSaveErr" style="display:none;font-size:12px;color:var(--red);font-family:var(--mono);"></span>
         <button class="copy-btn" id="cdsSaveBtn" onclick="saveCDS()" style="padding:7px 16px;font-size:12px;">💾 儲存</button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;" id="cdsInputGrid">
-      <!-- 動態產生 -->
-    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;" id="cdsInputGrid"></div>
     <div id="ghTokenRow" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:8px;flex-wrap:wrap;gap:8px;">
       <div style="font-size:12px;color:#f87171;margin-bottom:7px;">🔑 Token 驗證失敗，請重新輸入 GitHub Token</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -307,6 +324,13 @@ canvas{max-height:320px;}
         <option value="SMCI">SMCI 超微電腦</option>
         <option value="ARM">ARM 安謀</option>
         <option value="TSLA">TSLA 特斯拉</option>
+        <optgroup label="── 主權 CDS ──">
+        <option value="cds_US">🇺🇸 美國 CDS</option>
+        <option value="cds_KR">🇰🇷 南韓 CDS</option>
+        <option value="cds_JP">🇯🇵 日本 CDS</option>
+        <option value="cds_CN">🇨🇳 中國 CDS</option>
+        <option value="cds_HK">🇭🇰 香港 CDS</option>
+        </optgroup>
       </select>
     </div>
     <div>
@@ -544,6 +568,46 @@ function renderMonTable(data){
     : '<tr><td colspan="6" class="empty">無資料</td></tr>';
 }
 
+/* ══ RENDER CDS TABLE ══ */
+function renderCDSTable(data){
+  const CDS_THRESHOLDS = {
+    US:{danger:45}, KR:{danger:30}, JP:{danger:25}, CN:{danger:70}, HK:{danger:35}
+  };
+  const cdsData = data?.cds || {};
+  const rows = CDS_LIST.map(c=>{
+    const entry = cdsData[c.key];
+    const thr = CDS_THRESHOLDS[c.key];
+    if(!entry || !entry.value){
+      return `<tr>
+        <td>${c.flag} ${c.name} 5Y CDS <span style="font-size:10px;color:var(--text3)">手動維護</span></td>
+        <td style="text-align:center;color:var(--text3)">—</td>
+        <td style="text-align:center;color:var(--text3)">—</td>
+        <td style="text-align:center">&gt;${thr.danger} bps</td>
+        <td style="text-align:center;color:var(--text3)">—</td>
+        <td style="text-align:center">${dotHtml('off')}</td>
+      </tr>`;
+    }
+    const v = entry.value;
+    const cl = v >= thr.danger ? 'r' : 'g';
+    const chg = entry.chg_abs != null
+      ? `<span class="${entry.chg_abs>0?'c-up':entry.chg_abs<0?'c-dn':'c-neu'}">${entry.chg_abs>0?'+':''}${entry.chg_abs.toFixed(1)} bps</span>`
+      : '—';
+    return `<tr>
+      <td>${c.flag} ${c.name} 5Y CDS <span style="font-size:10px;color:var(--text3)">${dateBadge(entry.date)}</span></td>
+      <td style="text-align:center;font-family:var(--mono)">${v.toFixed(2)} bps</td>
+      <td style="text-align:center;color:var(--text3)">—</td>
+      <td style="text-align:center">&gt;${thr.danger} bps</td>
+      <td style="text-align:center">${chg}</td>
+      <td style="text-align:center">${dotHtml(cl)}</td>
+    </tr>`;
+  });
+
+  // 找或建 CDS tbody
+  let tbody = document.getElementById('cdsTbody');
+  if(!tbody) return;
+  tbody.innerHTML = rows.join('');
+}
+
 /* ══ RENDER STOCK TABLE ══ */
 function renderStkTable(data){
   const stocks=data.stocks;
@@ -573,10 +637,12 @@ function renderStkTable(data){
 function renderAll(data){
   renderMonTable(data);
   renderStkTable(data);
+  renderCDSTable(data);
 }
 function showNoData(){
   document.getElementById('monTbody').innerHTML='<tr><td colspan="6" class="empty">無資料</td></tr>';
   document.getElementById('stkTbody').innerHTML='<tr><td colspan="5" class="empty">無資料</td></tr>';
+  const ct=document.getElementById('cdsTbody'); if(ct) ct.innerHTML='<tr><td colspan="6" class="empty">無資料</td></tr>';
 }
 
 /* ══════════════════════════════════════
@@ -751,6 +817,10 @@ function extractValue(data, metric){
   if(metric==='y30')    return data.y30?.value??null;
   if(metric==='spread') return data.spread??null;
   if(metric==='sox')    return data.sox?.value??null;
+  if(metric.startsWith('cds_')){
+    const country = metric.replace('cds_','');
+    return data.cds?.[country]?.value??null;
+  }
   return data.stocks?.[metric]?.value??null;
 }
 
@@ -760,6 +830,8 @@ function getTrendLineConfig(metric){
   if(metric==='vix')  return [{v:tv.warn,c:'#fbbf24',l:`警戒 ${tv.warn}`},{v:tv.danger,c:'#f87171',l:`恐慌 ${tv.danger}`}];
   if(metric==='move') return [{v:tm.warn,c:'#fbbf24',l:`偏高 ${tm.warn}`},{v:tm.danger,c:'#f87171',l:`警戒 ${tm.danger}`}];
   if(metric==='spread') return [{v:0,c:'#f87171',l:'倒掛線 0'}];
+  const cdsLimits = {cds_US:45,cds_KR:30,cds_JP:25,cds_CN:70,cds_HK:35};
+  if(cdsLimits[metric]) return [{v:cdsLimits[metric],c:'#f87171',l:`警戒 ${cdsLimits[metric]} bps`}];
   return [];
 }
 
