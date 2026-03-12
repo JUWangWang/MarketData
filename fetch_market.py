@@ -25,7 +25,6 @@ else:
     # Actions 在 UTC 22:30 執行（台灣時間隔天早上）
     # 目標是「前一個交易日」的收盤資料
     d = date.today()
-    d -= timedelta(days=1)
     while d.weekday() >= 5:   # 5=Saturday, 6=Sunday
         d -= timedelta(days=1)
     TARGET = d.strftime("%Y-%m-%d")
