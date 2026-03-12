@@ -37,7 +37,7 @@
     { "symbol": "TSM",  "name": "台積電",   "emoji": "🔵", "grade": "IG1" },
     { "symbol": "SMCI", "name": "超微電腦", "emoji": "⚡",  "grade": "HY1" },
     { "symbol": "ARM",  "name": "安謀控股", "emoji": "💻", "grade": "IG1" },
-    { "symbol": "TSLA", "name": "特斯拉",   "emoji": "🚗", "grade": "IG3" }
+    { "symbol": "TSLA", "name": "特斯拉",   "emoji": "🚗", "grade": "IG2" }
   ],
 
   "display": {
