@@ -247,7 +247,7 @@ canvas{max-height:320px;}
   </div>
 
   <!-- 主權 CDS 表格 + 手動維護 -->
-  <div class="sec"><span>🌏</span><span class="sec-t">主要國家資訊</span><span class="stag">手動維護</span></div>
+  <div class="sec"><span>🌏</span><span class="sec-t">主要國家資訊</span><span class="stag">手動維護</span><a href="https://hk.investing.com/rates-bonds/world-cds" target="_blank" style="margin-left:10px;font-size:11px;color:var(--accent);text-decoration:none;opacity:.8;">🔗 查詢CDS數值</a></div>
   <div class="mon-card">
     <table style="width:100%;border-collapse:collapse;">
       <thead class="mon-thead">
@@ -292,11 +292,11 @@ canvas{max-height:320px;}
   <div class="email-bar">
     <div class="email-bar-l">
       <b>📧 每日報告</b>
-      <div style="font-size:12px;margin-top:3px;">產生 HTML 表格並複製到剪貼簿，直接貼入 Outlook 信件</div>
+      <div style="font-size:12px;margin-top:3px;">產生 .eml 信件檔，雙擊用 Outlook 直接開啟寄出</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
-      <span class="copy-toast" id="copyToast">✅ 已複製！</span>
-      <button class="copy-btn" onclick="copyEmailHTML()">📋 複製每日報告</button>
+      <span class="copy-toast" id="copyToast">✅ 已下載！</span>
+      <button class="copy-btn" onclick="downloadEML()">📩 下載每日報告</button>
     </div>
   </div>
 </div>
@@ -597,7 +597,7 @@ function renderCDSTable(data){
       <td style="text-align:center;font-family:var(--mono)">${v.toFixed(2)} bps</td>
       <td style="text-align:center;color:var(--text3)">—</td>
       <td style="text-align:center">&gt;${thr.danger} bps</td>
-      <td style="text-align:center">${chg}</td>
+      <td style="text-align:center;font-family:var(--mono)">${v.toFixed(2)} bps</td>
       <td style="text-align:center">${dotHtml(cl)}</td>
     </tr>`;
   });
@@ -718,7 +718,7 @@ function buildEmailHTML(){
       cdsRows+=`<tr><td style="${tdLStyle}">${name} 5Y CDS</td><td style="${tdStyle}" colspan="4">—</td><td style="${tdStyle}">${dot('off')}</td></tr>`;
     } else {
       const v=entry.value, cl=v>=thr?'r':'g';
-      const chg=entry.chg_abs!=null?`${entry.chg_abs>0?'+':''}${entry.chg_abs.toFixed(1)} bps`:'—';
+      const chg=v.toFixed(2)+' bps';
       cdsRows+=`<tr><td style="${tdLStyle}">${name} 5Y CDS</td><td style="${tdStyle}">${v.toFixed(2)} bps</td><td style="${tdStyle}">—</td><td style="${tdStyle}">&gt;${thr} bps</td><td style="${tdStyle}">${chg}</td><td style="${tdStyle}">${dot(cl)}</td></tr>`;
     }
   }
@@ -765,21 +765,40 @@ function buildEmailHTML(){
 <br><p style="font-family:sans-serif;font-size:11px;color:#888;">資料來源：Treasury.gov / yfinance｜CDS 為手動維護｜僅供參考，不構成投資建議</p>`;
 }
 
-async function copyEmailHTML(){
-  const html=buildEmailHTML();
-  try{
-    await navigator.clipboard.write([
-      new ClipboardItem({'text/html': new Blob([html],{type:'text/html'}), 'text/plain': new Blob([html],{type:'text/plain'})})
-    ]);
-  }catch(e){
-    // fallback
-    const ta=document.createElement('textarea'); ta.value=html;
-    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-  }
-  const t=document.getElementById('copyToast');
-  t.style.display='inline';
-  setTimeout(()=>t.style.display='none',2500);
+function downloadEML(){
+  const date = fmtDisp(selDate);
+  const subject = `${date} 金融市場即時監控指標`;
+  const bodyHtml = buildEmailHTML();
+
+  const eml = [
+    'MIME-Version: 1.0',
+    'Content-Type: multipart/alternative; boundary="boundary_eml"',
+    `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
+    'From: MarketData <marketdata@report.com>',
+    '',
+    '--boundary_eml',
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    btoa(unescape(encodeURIComponent(
+      `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${bodyHtml}</body></html>`
+    ))),
+    '',
+    '--boundary_eml--'
+  ].join('\r\n');
+
+  const blob = new Blob([eml], {type:'message/rfc822'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `market_${fmtISO(selDate)}.eml`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  const t = document.getElementById('copyToast');
+  t.style.display = 'inline';
+  setTimeout(()=>t.style.display='none', 2500);
 }
+
 
 /* ══════════════════════════════════════
    TREND CHART
