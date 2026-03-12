@@ -6,6 +6,7 @@
 <title>金融市場每日監控指標</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <style>
 :root{
   --bg:#0d0f17;--card:#13161f;--card2:#181b26;--border:#222537;
@@ -235,6 +236,7 @@ canvas{max-height:320px;}
           <th>第一警示點</th>
           <th>第二警示點</th>
           <th>即時監控數值</th>
+          <th>週變化</th>
           <th>狀態</th>
         </tr>
       </thead>
@@ -493,6 +495,9 @@ function setStatus(msg,type='load'){
 }
 
 /* ══ LOAD JSON ══ */
+let prevData = null;   // 昨日資料（用於摘要比較）
+let weekAgoData = null; // 7天前資料（用於週變化）
+
 async function loadDate(d){
   const iso=fmtISO(d), isToday=d.getTime()===todayD().getTime();
   const url=isToday?'./data/latest.json':`./data/market_${iso}.json`;
@@ -502,6 +507,27 @@ async function loadDate(d){
     if(!r.ok) throw new Error(`找不到 ${iso} 的資料（HTTP ${r.status}）`);
     const data=await r.json();
     currentData=data;
+
+    // 背景抓昨日 & 7天前資料（不阻塞主流程）
+    prevData = null; weekAgoData = null;
+    const prev1 = new Date(d); prev1.setDate(d.getDate()-1);
+    const prev7 = new Date(d); prev7.setDate(d.getDate()-7);
+    // 往前找最近有資料的交易日（最多回溯5天）
+    const tryFetch = async (base, maxBack) => {
+      for(let i=0; i<maxBack; i++){
+        const dd = new Date(base); dd.setDate(base.getDate()-i);
+        try{
+          const rr = await fetch(`./data/market_${fmtISO(dd)}.json`);
+          if(rr.ok) return await rr.json();
+        }catch(e){}
+      }
+      return null;
+    };
+    Promise.all([tryFetch(prev1,3), tryFetch(prev7,5)]).then(([p,w])=>{
+      prevData=p; weekAgoData=w;
+      renderAll(data); // 重新渲染以加入比較數據
+    });
+
     renderAll(data);
     loadCDSValues(data);
     const gen=data.generated_at?new Date(data.generated_at).toLocaleString('zh-TW'):'—';
@@ -525,6 +551,19 @@ const dotHtml = cls => `<span class="mon-dot ${cls}"></span>`;
 function renderMonTable(data){
   const tv=CFG.thresholds?.vix||{warn:20,danger:30};
   const tm=CFG.thresholds?.move||{warn:110,danger:120};
+  const w=weekAgoData; // 7天前資料
+
+  // 週變化 HTML helper
+  const wkHtml = (cur, prev, isYield=false) => {
+    if(cur==null||prev==null) return '<span style="color:var(--text3)">—</span>';
+    const diff = isYield ? (cur-prev)*100 : cur-prev; // yield用BP，其他用原始差
+    const pct  = prev!==0 ? (cur-prev)/Math.abs(prev)*100 : null;
+    const cl   = diff>0?'c-up':diff<0?'c-dn':'c-neu';
+    const s    = diff>0?'▲':'▼';
+    if(isYield) return `<span class="${cl}">${s}${Math.abs(diff).toFixed(1)}BP</span>`;
+    if(pct!=null) return `<span class="${cl}">${s}${Math.abs(pct).toFixed(1)}%</span>`;
+    return `<span class="${cl}">${s}${Math.abs(diff).toFixed(2)}</span>`;
+  };
 
   const rows = [];
 
@@ -535,10 +574,8 @@ function renderMonTable(data){
     const cl=v>=tv.danger?'r':v>=tv.warn?'y':'g';
     rows.push([
       `VIX 指數 <span style="font-size:10px;color:var(--text3)">${dateBadge(vix.date)}</span>`,
-      v.toFixed(2),
-      `&gt;${tv.warn}`,
-      `&gt;${tv.danger}`,
-      v.toFixed(2),
+      v.toFixed(2), `&gt;${tv.warn}`, `&gt;${tv.danger}`, v.toFixed(2),
+      wkHtml(v, w?.vix?.value),
       dotHtml(cl)
     ]);
   }
@@ -550,10 +587,8 @@ function renderMonTable(data){
     const cl=v>=tm.danger?'r':v>=tm.warn?'y':'g';
     rows.push([
       `MOVE 指數 <span style="font-size:10px;color:var(--text3)">${dateBadge(move.date)}</span>`,
-      v.toFixed(2),
-      `&gt;${tm.warn}`,
-      `&gt;${tm.danger}`,
-      v.toFixed(2),
+      v.toFixed(2), `&gt;${tm.warn}`, `&gt;${tm.danger}`, v.toFixed(2),
+      wkHtml(v, w?.move?.value),
       dotHtml(cl)
     ]);
   }
@@ -576,10 +611,8 @@ function renderMonTable(data){
       }
       rows.push([
         `${yr.label} <span style="font-size:10px;color:var(--text3)">${dateBadge(d.date)}</span>`,
-        d.value.toFixed(3)+'%',
-        `當日利率上升${thr.warn}BP`,
-        `當日利率上升${thr.danger}BP`,
-        monVal,
+        d.value.toFixed(3)+'%', `當日利率上升${thr.warn}BP`, `當日利率上升${thr.danger}BP`, monVal,
+        wkHtml(d.value, w?.[yr.key]?.value, true),
         dotHtml(cl)
       ]);
     }
@@ -591,10 +624,8 @@ function renderMonTable(data){
     const cl=sp<0?'r':'g';
     rows.push([
       '十年期-二年期公債利差(bps)',
-      sp.toFixed(2)+' bps',
-      '—',
-      '&lt;0',
-      sp.toFixed(2)+' bps',
+      sp.toFixed(2)+' bps', '—', '&lt;0', sp.toFixed(2)+' bps',
+      wkHtml(sp, w?.spread),
       dotHtml(cl)
     ]);
   }
@@ -608,16 +639,16 @@ function renderMonTable(data){
     rows.push([
       `費半指數 <span style="font-size:10px;color:var(--text3)">${dateBadge(sox.date)}</span>`,
       sox.value.toLocaleString('en',{maximumFractionDigits:2}),
-      `當日下跌${Math.abs(thr.warn)}%`,
-      `當日下跌${Math.abs(thr.danger)}%`,
+      `當日下跌${Math.abs(thr.warn)}%`, `當日下跌${Math.abs(thr.danger)}%`,
       `${pct>0?'+':''}${pct.toFixed(2)}%`,
+      wkHtml(sox.value, w?.sox?.value),
       dotHtml(cl)
     ]);
   }
 
   document.getElementById('monTbody').innerHTML = rows.length
-    ? rows.map(r=>`<tr>${r.map((c,i)=>`<td ${i>0?'style="text-align:center"':''}>${c}</td>`).join('')}</tr>`).join('')
-    : '<tr><td colspan="6" class="empty">無資料</td></tr>';
+    ? rows.map(r=>`<tr>${r.map((c,i)=>`<td ${i>0&&i<r.length?'style="text-align:center"':''}>${c}</td>`).join('')}</tr>`).join('')
+    : '<tr><td colspan="7" class="empty">無資料</td></tr>';
 }
 
 /* ══ RENDER CDS TABLE ══ */
@@ -756,10 +787,35 @@ function renderSummary(data){
   hl.textContent = headline;
   hl.className = `sum-headline ${maxLevel}`;
 
+  // 較昨日比較
+  let cmpHtml = '';
+  if(prevData){
+    const cmpItems = [];
+    if(data.vix&&prevData.vix){
+      const d=data.vix.value-prevData.vix.value;
+      const cl=d>0?'c-up':'c-dn';
+      cmpItems.push(`VIX <span class="${cl}">${d>0?'▲':'▼'}${Math.abs(d).toFixed(2)}</span>`);
+    }
+    if(data.sox&&prevData.sox){
+      const d=data.sox.value-prevData.sox.value;
+      const pct=d/prevData.sox.value*100;
+      const cl=d>0?'c-up':'c-dn'; // 費半漲是紅色（c-up）
+      cmpItems.push(`費半 <span class="${cl}">${d>0?'▲':'▼'}${Math.abs(pct).toFixed(1)}%</span>`);
+    }
+    if(data.y10&&prevData.y10){
+      const d=(data.y10.value-prevData.y10.value)*100;
+      const cl=d>0?'c-up':'c-dn';
+      cmpItems.push(`10Y <span class="${cl}">${d>0?'+':''}${d.toFixed(1)}BP</span>`);
+    }
+    if(cmpItems.length){
+      cmpHtml = `<div style="font-size:11px;color:var(--text3);margin-top:8px;font-family:var(--mono);">較昨日：${cmpItems.join(' ／ ')}</div>`;
+    }
+  }
+
   if(tags.length){
-    tgs.innerHTML = tags.map(t=>`<span class="sum-tag ${t.cl}">${t.label}</span>`).join('');
+    tgs.innerHTML = tags.map(t=>`<span class="sum-tag ${t.cl}">${t.label}</span>`).join('') + cmpHtml;
   } else {
-    tgs.innerHTML = '<span style="font-size:12px;color:var(--text3);">🟢 所有指標正常，無異常訊號</span>';
+    tgs.innerHTML = '<span style="font-size:12px;color:var(--text3);">🟢 所有指標正常，無異常訊號</span>' + cmpHtml;
   }
   card.style.display = '';
 }
@@ -1065,6 +1121,30 @@ async function renderTrendChart(){
   thresholds.forEach((t,i)=>{
     annotations[`line${i}`]={type:'line',yMin:t.v,yMax:t.v,borderColor:t.c,borderWidth:1.5,borderDash:[5,4],
       label:{content:t.l,display:true,position:'end',color:t.c,font:{size:10}}};
+
+    // 偵測突破點：當日 >= 門檻 且 前一日 < 門檻
+    values.forEach((v,idx)=>{
+      if(idx===0) return;
+      const prev=values[idx-1];
+      const breached = t.v>=0 ? (v>=t.v && prev<t.v) : (v<=t.v && prev>t.v);
+      if(breached){
+        annotations[`breach_${i}_${idx}`]={
+          type:'point', xValue:labels[idx], yValue:v,
+          backgroundColor:'rgba(239,68,68,0.85)', radius:6, borderWidth:0,
+          label:{content:`⚠ ${labels[idx]}`,display:true,position:'top',
+            color:'#f87171',font:{size:9},padding:2}
+        };
+      }
+    });
+  });
+
+  // 點的顏色：突破門檻的點標紅
+  const pointColors = values.map((v)=>{
+    for(const t of thresholds){
+      const over = t.v>=0 ? v>=t.v : v<=t.v;
+      if(over) return '#ef4444';
+    }
+    return '#4da6ff';
   });
 
   if(trendChart) trendChart.destroy();
@@ -1078,7 +1158,9 @@ async function renderTrendChart(){
       labels,
       datasets:[{
         label,data:values,
-        borderColor:'#4da6ff',borderWidth:2,pointRadius:values.length>30?0:3,
+        borderColor:'#4da6ff',borderWidth:2,
+        pointRadius:values.length>30?0:3,
+        pointBackgroundColor:pointColors,
         pointHoverRadius:5,fill:true,backgroundColor:grad,tension:.3
       }]
     },
@@ -1087,6 +1169,7 @@ async function renderTrendChart(){
       plugins:{
         legend:{display:false},
         tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toFixed(3)}`}},
+        annotation:{annotations}
       },
       scales:{
         x:{ticks:{color:'#7a83a0',font:{size:11},maxTicksLimit:10},grid:{color:'#1e2235'}},
@@ -1139,36 +1222,45 @@ function initCDSGrid(){
       <input class="cds-inp" id="cds_${c.key}" type="number" step="0.1" min="0" placeholder="—"
         oninput="this.classList.toggle('has-val',!!this.value)">
       <div class="cds-chg" id="cds_chg_${c.key}"></div>
+      <div id="cds_prev_${c.key}" style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px;min-height:14px;"></div>
     </div>
   `).join('');
 }
 
 function loadCDSValues(data){
-  // 從已載入的 JSON 帶出 CDS 數值
   document.getElementById('cdsDateLabel').textContent = fmtISO(selDate);
   for(const c of CDS_LIST){
-    const inp = document.getElementById('cds_'+c.key);
-    const chg = document.getElementById('cds_chg_'+c.key);
+    const inp  = document.getElementById('cds_'+c.key);
+    const chg  = document.getElementById('cds_chg_'+c.key);
+    const prev = document.getElementById('cds_prev_'+c.key);
     if(!inp) continue;
     const entry = data?.cds?.[c.key];
     if(entry && entry.value){
       inp.value = entry.value;
       inp.classList.add('has-val');
-      // 顯示漲跌
       if(entry.chg_abs != null){
         const sign = entry.chg_abs > 0 ? '+' : '';
         const cl   = entry.chg_abs > 0 ? 'c-up' : entry.chg_abs < 0 ? 'c-dn' : 'c-neu';
-        chg.innerHTML = `<span class="${cl}">${sign}${entry.chg_abs.toFixed(1)} bps</span>`;
+        if(chg) chg.innerHTML = `<span class="${cl}">${sign}${entry.chg_abs.toFixed(1)} bps</span>`;
       } else {
-        chg.innerHTML = '';
+        if(chg) chg.innerHTML = '';
+      }
+      // 前日值提示
+      if(prev){
+        const prevVal = entry.prev ?? prevData?.cds?.[c.key]?.value ?? null;
+        prev.textContent = prevVal != null ? `前日：${prevVal.toFixed(2)}` : '';
       }
     } else {
       inp.value = '';
       inp.classList.remove('has-val');
-      chg.innerHTML = '';
+      if(chg) chg.innerHTML = '';
+      // 從 prevData 抓前日值
+      if(prev){
+        const prevVal = prevData?.cds?.[c.key]?.value ?? null;
+        prev.textContent = prevVal != null ? `前日：${prevVal.toFixed(2)}` : '';
+      }
     }
   }
-  // Token 列平常隱藏，不需要同步顯示
 }
 
 async function saveCDS(){
