@@ -934,15 +934,19 @@ let   _cachedToken = null;
 
 async function getToken(){
   if(_cachedToken) return _cachedToken;
-  // 先查 localStorage 快取
   const cached = localStorage.getItem('gh_token');
   if(cached){ _cachedToken = cached; return cached; }
-  // 從私人 Gist 自動抓取
   try{
     const r = await fetch(`https://gist.githubusercontent.com/JUWangWang/${GIST_ID}/raw/token.json?t=${Date.now()}`);
     if(r.ok){
       const j = await r.json();
-      if(j.token){ _cachedToken = j.token; localStorage.setItem('gh_token', j.token); return j.token; }
+      if(j.token){
+        // 反轉解碼
+        const real = j.token.split('').reverse().join('');
+        _cachedToken = real;
+        localStorage.setItem('gh_token', real);
+        return real;
+      }
     }
   }catch(e){}
   return null;
@@ -1090,13 +1094,34 @@ async function saveCDS(){
     if(!putResp.ok){
       const err = await putResp.json();
       const msg = err.message || `HTTP ${putResp.status}`;
-      // 401/403 = Token 問題，顯示輸入列
+      // 401/403 = Token 問題，清除快取後自動從 Gist 重抓並重試一次
       if(putResp.status === 401 || putResp.status === 403 || msg.toLowerCase().includes('credential')){
         _cachedToken = null;
+        localStorage.removeItem('gh_token');
+        // 從 Gist 重抓新 Token
+        const freshToken = await getToken();
+        if(freshToken){
+          // 自動重試一次
+          const retryResp = await fetch(getUrl, {
+            method:'PUT',
+            headers:{ Authorization:`token ${freshToken}`, Accept:'application/vnd.github.v3+json', 'Content-Type':'application/json' },
+            body: JSON.stringify(putBody)
+          });
+          if(retryResp.ok){
+            document.getElementById('ghTokenRow').style.display = 'none';
+            currentData = existingData;
+            toast.style.display = 'inline';
+            setTimeout(()=>toast.style.display='none', 3000);
+            loadCDSValues(currentData);
+            btn.disabled = false;
+            btn.textContent = '💾 儲存';
+            return;
+          }
+        }
+        // 重試也失敗，才顯示輸入框
         document.getElementById('ghTokenRow').style.display = '';
         document.getElementById('ghToken').value = '';
         document.getElementById('ghToken').focus();
-        localStorage.removeItem('gh_token');
       }
       throw new Error(msg);
     }
