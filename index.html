@@ -660,9 +660,12 @@ function buildEmailHTML(){
   const tdStyle='padding:6px 10px;font-size:12px;border:1px solid #dde;text-align:center;';
   const tdLStyle='padding:6px 10px;font-size:12px;border:1px solid #dde;text-align:left;';
 
+  // Outlook 不支援 border-radius，改用彩色文字符號 ●
   const dot=(cl)=>{
-    const c=cl==='r'?'#e53e3e':cl==='y'?'#d69e2e':'#38a169';
-    return `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${c};"></span>`;
+    if(cl==='r') return `<span style="color:#e53e3e;font-size:16px;line-height:1;">●</span>`;
+    if(cl==='y') return `<span style="color:#d69e2e;font-size:16px;line-height:1;">●</span>`;
+    if(cl==='off') return `<span style="color:#666;font-size:16px;line-height:1;">○</span>`;
+    return `<span style="color:#38a169;font-size:16px;line-height:1;">●</span>`;
   };
 
   // 預警分析
@@ -703,6 +706,23 @@ function buildEmailHTML(){
     stk+=`<tr><td style="${tdLStyle}">${meta.name||meta.symbol}</td><td style="${tdStyle}">$${sd.value.toFixed(2)}</td><td style="${tdStyle};color:${pct>0?'#c0392b':'#27ae60'}">${pct>0?'+':''}${pct.toFixed(2)}%</td><td style="${tdStyle}">${meta.grade||'—'}</td><td style="${tdStyle}">${dot(cl)}</td></tr>`;
   }
 
+  // 主權 CDS
+  const CDS_THR = {US:45,KR:30,JP:25,CN:70,HK:35};
+  const CDS_NAMES = {US:'🇺🇸 美國',KR:'🇰🇷 南韓',JP:'🇯🇵 日本',CN:'🇨🇳 中國',HK:'🇭🇰 香港'};
+  let cdsRows='';
+  const cdsData=d.cds||{};
+  for(const [k,name] of Object.entries(CDS_NAMES)){
+    const entry=cdsData[k];
+    const thr=CDS_THR[k];
+    if(!entry||!entry.value){
+      cdsRows+=`<tr><td style="${tdLStyle}">${name} 5Y CDS</td><td style="${tdStyle}" colspan="4">—</td><td style="${tdStyle}">${dot('off')}</td></tr>`;
+    } else {
+      const v=entry.value, cl=v>=thr?'r':'g';
+      const chg=entry.chg_abs!=null?`${entry.chg_abs>0?'+':''}${entry.chg_abs.toFixed(1)} bps`:'—';
+      cdsRows+=`<tr><td style="${tdLStyle}">${name} 5Y CDS</td><td style="${tdStyle}">${v.toFixed(2)} bps</td><td style="${tdStyle}">—</td><td style="${tdStyle}">&gt;${thr} bps</td><td style="${tdStyle}">${chg}</td><td style="${tdStyle}">${dot(cl)}</td></tr>`;
+    }
+  }
+
   return `
 <p style="font-family:sans-serif;font-size:14px;margin-bottom:12px;">${date} 金融市場即時監控指標如下：</p>
 <table style="border-collapse:collapse;width:100%;max-width:700px;font-family:sans-serif;">
@@ -729,7 +749,20 @@ function buildEmailHTML(){
   </tr>
   ${stk}
 </table>
-<br><p style="font-family:sans-serif;font-size:11px;color:#888;">資料來源：Treasury.gov / yfinance｜僅供參考，不構成投資建議</p>`;
+<br>
+<table style="border-collapse:collapse;width:100%;max-width:700px;font-family:sans-serif;">
+  <tr><td colspan="6" style="${hdrStyle}">主要國家資訊（5年期主權 CDS）</td></tr>
+  <tr>
+    <th style="${thLStyle}">國家</th>
+    <th style="${thStyle}">實際值</th>
+    <th style="${thStyle}">第一警示點</th>
+    <th style="${thStyle}">第二警示點</th>
+    <th style="${thStyle}">即時監控數值</th>
+    <th style="${thStyle}">狀態</th>
+  </tr>
+  ${cdsRows}
+</table>
+<br><p style="font-family:sans-serif;font-size:11px;color:#888;">資料來源：Treasury.gov / yfinance｜CDS 為手動維護｜僅供參考，不構成投資建議</p>`;
 }
 
 async function copyEmailHTML(){
@@ -896,7 +929,24 @@ async function renderTrendChart(){
    CDS 手動維護
 ══════════════════════════════════════ */
 const GH_REPO  = 'JUWangWang/MarketData';
-// Token 不存在程式碼裡，從 localStorage 或輸入欄取得
+const GIST_ID  = '79308bf218675c4153e7e64d5f6fa146';
+let   _cachedToken = null;
+
+async function getToken(){
+  if(_cachedToken) return _cachedToken;
+  // 先查 localStorage 快取
+  const cached = localStorage.getItem('gh_token');
+  if(cached){ _cachedToken = cached; return cached; }
+  // 從私人 Gist 自動抓取
+  try{
+    const r = await fetch(`https://gist.githubusercontent.com/JUWangWang/${GIST_ID}/raw/token.json?t=${Date.now()}`);
+    if(r.ok){
+      const j = await r.json();
+      if(j.token){ _cachedToken = j.token; localStorage.setItem('gh_token', j.token); return j.token; }
+    }
+  }catch(e){}
+  return null;
+}
 
 const CDS_LIST = [
   {key:'US', name:'美國', flag:'🇺🇸'},
@@ -952,19 +1002,19 @@ async function saveCDS(){
   const toast = document.getElementById('cdsSaveToast');
   const errEl = document.getElementById('cdsSaveErr');
 
-  // 取得 Token（從 localStorage，若失敗再顯示輸入列）
+  // 取得 Token（優先從 Gist 自動抓，失敗才顯示輸入列）
+  let token = await getToken();
   const tokenInput = document.getElementById('ghToken')?.value.trim();
-  const token = tokenInput || localStorage.getItem('gh_token') || '';
+  if(tokenInput){ token = tokenInput; _cachedToken = tokenInput; localStorage.setItem('gh_token', tokenInput); }
   if(!token){
     document.getElementById('ghTokenRow').style.display = '';
     document.getElementById('ghToken').focus();
-    errEl.textContent = '❌ 請輸入 GitHub Token';
+    errEl.textContent = '❌ 無法取得 Token，請手動輸入';
     errEl.style.display = 'inline';
     btn.disabled = false;
     btn.textContent = '💾 儲存';
     return;
   }
-  if(tokenInput) localStorage.setItem('gh_token', tokenInput);
 
   // 收集輸入值
   const newCDS = {};
@@ -1042,6 +1092,7 @@ async function saveCDS(){
       const msg = err.message || `HTTP ${putResp.status}`;
       // 401/403 = Token 問題，顯示輸入列
       if(putResp.status === 401 || putResp.status === 403 || msg.toLowerCase().includes('credential')){
+        _cachedToken = null;
         document.getElementById('ghTokenRow').style.display = '';
         document.getElementById('ghToken').value = '';
         document.getElementById('ghToken').focus();
@@ -1078,9 +1129,8 @@ async function saveCDS(){
 
 function saveTokenOnly(){
   const v = document.getElementById('ghToken').value.trim();
-  if(v){ localStorage.setItem('gh_token', v); }
+  if(v){ _cachedToken = v; localStorage.setItem('gh_token', v); }
   document.getElementById('ghTokenRow').style.display = 'none';
-  // 重新嘗試儲存
   saveCDS();
 }
 
@@ -1090,6 +1140,8 @@ function saveTokenOnly(){
   initCDSGrid();
   initDateNav();
   loadDate(selDate);
+  // 背景預載 Token（讓第一次按儲存時不用等）
+  getToken();
   setInterval(()=>{ if(selDate.getTime()===todayD().getTime()) loadDate(selDate); }, CFG.display?.auto_refresh_ms||3600000);
 })();
 </script>
