@@ -525,7 +525,8 @@ async function loadDate(d){
     };
     Promise.all([tryFetch(prev1,3), tryFetch(prev7,5)]).then(([p,w])=>{
       prevData=p; weekAgoData=w;
-      renderAll(data); // 重新渲染以加入比較數據
+      renderAll(data);       // 更新週變化欄 & 摘要較昨日
+      loadCDSValues(data);   // 更新 CDS 前日值提示
     });
 
     renderAll(data);
