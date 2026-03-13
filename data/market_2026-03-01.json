@@ -1,0 +1,115 @@
+{
+  "generated_at": "2026-03-11T01:47:10.175094Z",
+  "target_date": "2026-03-02",
+  "vix": {
+    "value": 21.44,
+    "prev": 19.86,
+    "chg_abs": 1.58,
+    "chg_pct": 7.9557,
+    "date": "2026-03-02"
+  },
+  "move": {
+    "value": 73.21,
+    "prev": 73.38,
+    "chg_abs": -0.169998,
+    "chg_pct": -0.2317,
+    "date": "2026-03-02"
+  },
+  "y2": {
+    "value": 3.47,
+    "prev": 3.52,
+    "chg_abs": -0.05,
+    "chg_pct": -1.4205,
+    "date": "2026-03-02"
+  },
+  "y10": {
+    "value": 4.05,
+    "prev": 4.26,
+    "chg_abs": -0.21,
+    "chg_pct": -4.9296,
+    "date": "2026-03-02"
+  },
+  "y30": {
+    "value": 4.7,
+    "prev": 4.87,
+    "chg_abs": -0.17,
+    "chg_pct": -3.4908,
+    "date": "2026-03-02"
+  },
+  "spread": 58,
+  "sox": {
+    "value": 8137.3599,
+    "prev": 8098.3701,
+    "chg_abs": 38.989746,
+    "chg_pct": 0.4815,
+    "date": "2026-03-02"
+  },
+  "stocks": {
+    "NVDA": {
+      "value": 182.48,
+      "prev": 177.19,
+      "chg_abs": 5.289993,
+      "chg_pct": 2.9855,
+      "date": "2026-03-02",
+      "name": "è¼é",
+      "emoji": "ð¢",
+      "grade": "IG1"
+    },
+    "TSM": {
+      "value": 369.11,
+      "prev": 374.58,
+      "chg_abs": -5.470001,
+      "chg_pct": -1.4603,
+      "date": "2026-03-02",
+      "name": "å°ç©é»",
+      "emoji": "ðµ",
+      "grade": "IG1"
+    },
+    "SMCI": {
+      "value": 31.83,
+      "prev": 32.39,
+      "chg_abs": -0.559999,
+      "chg_pct": -1.7289,
+      "date": "2026-03-02",
+      "name": "è¶å¾®é»è¦",
+      "emoji": "â¡",
+      "grade": "HY1"
+    },
+    "ARM": {
+      "value": 124.37,
+      "prev": 127.45,
+      "chg_abs": -3.079994,
+      "chg_pct": -2.4166,
+      "date": "2026-03-02",
+      "name": "å®è¬æ§è¡",
+      "emoji": "ð»",
+      "grade": "IG1"
+    },
+    "TSLA": {
+      "value": 403.32,
+      "prev": 402.51,
+      "chg_abs": 0.809998,
+      "chg_pct": 0.2012,
+      "date": "2026-03-02",
+      "name": "ç¹æ¯æ",
+      "emoji": "ð",
+      "grade": "IG3"
+    }
+  },
+  "cds": {
+    "US": {
+      "value": 1,
+      "prev": null,
+      "chg_abs": null,
+      "chg_pct": null,
+      "date": "2026-03-01",
+      "name": "美國",
+      "flag": "🇺🇸"
+    },
+    "KR": null,
+    "JP": null,
+    "CN": null,
+    "HK": null
+  },
+  "cds_updated_at": "2026-03-13T05:19:54.804Z"
+}
