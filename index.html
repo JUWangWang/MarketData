@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --bg:#0d0f17;--card:#13161f;--card2:#181b26;--border:#222537;
@@ -313,9 +314,10 @@ canvas{max-height:320px;}
       <b>📧 每日報告</b>
       <div style="font-size:12px;margin-top:3px;">產生 .eml 信件檔，雙擊用 Outlook 直接開啟寄出</div>
     </div>
-    <div style="display:flex;align-items:center;gap:12px;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <span class="copy-toast" id="copyToast">✅ 已下載！</span>
       <button class="copy-btn" onclick="downloadEML()">📩 下載每日報告</button>
+      <button class="copy-btn" onclick="downloadPNG()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">🖼️ 下載圖片</button>
     </div>
   </div>
 </div>
@@ -1006,6 +1008,57 @@ function downloadEML(){
   const t = document.getElementById('copyToast');
   t.style.display = 'inline';
   setTimeout(()=>t.style.display='none', 2500);
+}
+
+async function downloadPNG(){
+  if(!currentData){ alert('尚無資料'); return; }
+  const btn = document.querySelector('button[onclick="downloadPNG()"]');
+  const origText = btn.innerHTML;
+  btn.innerHTML = '⏳ 產生中...';
+  btn.disabled = true;
+
+  try{
+    // 建立隱藏容器，放入 email HTML（白底、固定寬度，模擬 Outlook 呈現）
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = [
+      'position:fixed','left:-9999px','top:0',
+      'width:720px','background:#ffffff','padding:24px',
+      'font-family:sans-serif','font-size:13px','color:#111',
+      'box-sizing:border-box','z-index:-1'
+    ].join(';');
+    wrapper.innerHTML = `<!DOCTYPE html><html><head></head><body>${buildEmailHTML()}</body></html>`;
+    // 只取 body 內容
+    wrapper.innerHTML = buildEmailHTML();
+    document.body.appendChild(wrapper);
+
+    // 等待渲染
+    await new Promise(r => setTimeout(r, 100));
+
+    const canvas = await html2canvas(wrapper, {
+      backgroundColor: '#ffffff',
+      scale: 2,          // 2x 解析度，清晰度更好
+      useCORS: true,
+      logging: false,
+      width: 720,
+    });
+    document.body.removeChild(wrapper);
+
+    // 下載
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `market_${fmtISO(selDate)}.png`;
+    a.click();
+
+    const t = document.getElementById('copyToast');
+    t.textContent = '✅ 圖片已下載！';
+    t.style.display = 'inline';
+    setTimeout(()=>{ t.style.display='none'; t.textContent='✅ 已下載！'; }, 2500);
+  } catch(e){
+    alert('截圖失敗：' + e.message);
+  } finally{
+    btn.innerHTML = origText;
+    btn.disabled = false;
+  }
 }
 
 
