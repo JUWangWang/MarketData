@@ -154,6 +154,39 @@ def yf_get(symbol, target_date_str):
             return None
  
  
+def move_get(target_date_str):
+    """直接打 Yahoo Finance chart API 抓 ^MOVE，繞過 yfinance library 的不穩定問題"""
+    try:
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE"
+        params = {"interval": "1d", "range": "10d"}
+        headers = {"User-Agent": "Mozilla/5.0"}
+        r = requests.get(url, params=params, headers=headers, timeout=15)
+        r.raise_for_status()
+        j = r.json()
+        ts    = j["chart"]["result"][0]["timestamp"]
+        close = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+        # 轉成 {date_str: close} dict，過濾 None
+        rows = []
+        for t, c in zip(ts, close):
+            if c is None:
+                continue
+            dt_str = datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")
+            rows.append((dt_str, c))
+        rows.sort(reverse=True)
+        # 找 <= target_date 的最新一筆
+        valid = [(dt, v) for dt, v in rows if dt <= target_date_str]
+        if not valid:
+            print(f"  ❌ MOVE API: no valid rows for {target_date_str}")
+            return None
+        curr_date, curr_val = valid[0]
+        prev_val = valid[1][1] if len(valid) > 1 else None
+        print(f"  ✅ MOVE API: {curr_val:.2f} ({curr_date})")
+        return make_entry(curr_val, prev_val, curr_date)
+    except Exception as e:
+        print(f"  ❌ MOVE API: {e}")
+        return None
+ 
+ 
 # ── FETCH ALL ────────────────────────────────────────────────
 def fetch_all(target):
     result = {
@@ -168,9 +201,12 @@ def fetch_all(target):
     result["vix"] = d
     print(f"  {'✅' if d else '❌'} VIX: {d['value'] if d else 'N/A'}")
  
-    # MOVE — yfinance ^MOVE
+    # MOVE — 直接打 Yahoo Finance API（yfinance ^MOVE 不穩定）
     print("📡 MOVE...")
-    d = yf_get("^MOVE", target)
+    d = move_get(target)
+    if not d:
+        print("  ⚠ MOVE API 失敗，fallback yfinance...")
+        d = yf_get("^MOVE", target)
     result["move"] = d
     print(f"  {'✅' if d else '❌'} MOVE: {d['value'] if d else 'N/A'}")
  
