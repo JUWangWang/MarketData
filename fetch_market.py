@@ -14,6 +14,7 @@ from pathlib import Path
 import yfinance as yf
 import pandas as pd
 import requests
+from bs4 import BeautifulSoup
 
 # ── CONFIG ──────────────────────────────────────────────────
 DATA_DIR = Path(__file__).parent / "data"
@@ -154,68 +155,99 @@ def yf_get(symbol, target_date_str):
             return None
 
 
-FRED_API_KEY = "0d1cefb6a6e1f5cadc9a75d7fb9a350b"
+def move_get_yahoo(target_date_str):
+    """Yahoo Finance chart API 抓 ^MOVE"""
+    try:
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE"
+        params = {"interval": "1d", "range": "10d"}
+        headers = {"User-Agent": "Mozilla/5.0"}
+        r = requests.get(url, params=params, headers=headers, timeout=15)
+        r.raise_for_status()
+        j = r.json()
+        ts    = j["chart"]["result"][0]["timestamp"]
+        close = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+        rows = []
+        for t, c in zip(ts, close):
+            if c is None: continue
+            dt_str = datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")
+            rows.append((dt_str, c))
+        rows.sort(reverse=True)
+        valid = [(dt, v) for dt, v in rows if dt <= target_date_str]
+        if not valid: return None, []
+        return valid[0][0], valid
+    except Exception as e:
+        print(f"  ⚠ MOVE Yahoo: {e}")
+        return None, []
+
+
+def move_get_investing(target_date_str):
+    """Investing.com 爬蟲抓 MOVE 歷史資料（作為備援來源）"""
+    try:
+        url = "https://www.investing.com/indices/ice-bofaml-move-historical-data"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Referer": "https://www.investing.com/",
+        }
+        r = requests.get(url, headers=headers, timeout=20)
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        # 找歷史資料表格
+        table = soup.find("table", {"data-test": "historical-data-table"}) \
+             or soup.find("table", id=lambda x: x and "historical" in str(x).lower()) \
+             or soup.find("table", class_=lambda x: x and "historical" in str(x).lower())
+        if not table:
+            # 嘗試找任何含日期和價格的表格
+            tables = soup.find_all("table")
+            for t in tables:
+                headers_row = t.find("tr")
+                if headers_row and "Price" in headers_row.text and "Date" in headers_row.text:
+                    table = t
+                    break
+        if not table:
+            print(f"  ⚠ MOVE Investing: 找不到資料表格")
+            return None, []
+
+        rows = []
+        for tr in table.find_all("tr")[1:]:  # 跳過表頭
+            tds = tr.find_all("td")
+            if len(tds) < 2: continue
+            try:
+                date_str = tds[0].get_text(strip=True)  # e.g. "Mar 14, 2026"
+                price_str = tds[1].get_text(strip=True).replace(",", "")
+                dt = datetime.strptime(date_str, "%b %d, %Y").strftime("%Y-%m-%d")
+                val = float(price_str)
+                if dt <= target_date_str:
+                    rows.append((dt, val))
+            except Exception:
+                continue
+        rows.sort(reverse=True)
+        if not rows: return None, []
+        return rows[0][0], rows
+    except Exception as e:
+        print(f"  ⚠ MOVE Investing: {e}")
+        return None, []
+
 
 def move_get(target_date_str):
-    """抓 MOVE 指數：同時查 Yahoo Finance API 和 FRED，選日期較大（較新）的那筆"""
-
-    def from_yahoo():
-        try:
-            url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE"
-            params = {"interval": "1d", "range": "10d"}
-            headers = {"User-Agent": "Mozilla/5.0"}
-            r = requests.get(url, params=params, headers=headers, timeout=15)
-            r.raise_for_status()
-            j = r.json()
-            ts    = j["chart"]["result"][0]["timestamp"]
-            close = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
-            rows = []
-            for t, c in zip(ts, close):
-                if c is None: continue
-                dt_str = datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")
-                rows.append((dt_str, c))
-            rows.sort(reverse=True)
-            valid = [(dt, v) for dt, v in rows if dt <= target_date_str]
-            if not valid: return None, None
-            return valid[0][0], valid  # (best_date, all_valid_rows)
-        except Exception as e:
-            print(f"  ⚠ MOVE Yahoo: {e}")
-            return None, None
-
-    def from_fred():
-        try:
-            url = "https://api.stlouisfed.org/fred/series/observations"
-            params = {
-                "series_id":       "MOVE",
-                "api_key":         FRED_API_KEY,
-                "file_type":       "json",
-                "sort_order":      "desc",
-                "observation_end": target_date_str,
-                "limit":           10,
-            }
-            r = requests.get(url, params=params, timeout=15)
-            r.raise_for_status()
-            obs = r.json().get("observations", [])
-            valid = [(o["date"], float(o["value"])) for o in obs
-                     if o["value"] not in (".", "") and o["date"] <= target_date_str]
-            if not valid: return None, None
-            return valid[0][0], valid
-        except Exception as e:
-            print(f"  ⚠ MOVE FRED: {e}")
-            return None, None
-
-    ydate, yrows = from_yahoo()
-    fdate, frows = from_fred()
-    print(f"  Yahoo date: {ydate or '—'}  FRED date: {fdate or '—'}")
+    """抓 MOVE 指數：同時查 Yahoo Finance 和 Investing.com，選日期較新的那筆"""
+    ydate, yrows = move_get_yahoo(target_date_str)
+    idate, irows = move_get_investing(target_date_str)
+    print(f"  Yahoo: {ydate or '—'}  Investing: {idate or '—'}")
 
     # 選日期較大（較新）的來源
-    if ydate and fdate:
-        best_rows = yrows if ydate >= fdate else frows
-        src = "Yahoo" if ydate >= fdate else "FRED"
+    if ydate and idate:
+        if ydate >= idate:
+            best_rows, src = yrows, "Yahoo"
+        else:
+            best_rows, src = irows, "Investing"
     elif ydate:
         best_rows, src = yrows, "Yahoo"
-    elif fdate:
-        best_rows, src = frows, "FRED"
+    elif idate:
+        best_rows, src = irows, "Investing"
     else:
         print(f"  ❌ MOVE: 兩個來源都無資料")
         return None
@@ -319,3 +351,4 @@ if __name__ == "__main__":
     for sym, s in data.get("stocks", {}).items():
         if s:
             print(f"  {sym}: ${s['value']:.2f} ({s['chg_pct']:+.2f}%)")
+
