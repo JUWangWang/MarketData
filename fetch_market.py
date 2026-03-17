@@ -4,21 +4,21 @@
 GitHub Actions 每日自動執行，輸出 data/YYYY-MM-DD.json
 手動補抓：python fetch_market.py 2026-03-07
 """
- 
+
 import json
 import os
 import sys
 from datetime import datetime, timedelta, date
 from pathlib import Path
- 
+
 import yfinance as yf
 import pandas as pd
 import requests
- 
+
 # ── CONFIG ──────────────────────────────────────────────────
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
- 
+
 # 手動指定日期（補抓歷史）
 if len(sys.argv) > 1:
     TARGET = sys.argv[1]  # "2026-03-07"
@@ -28,10 +28,10 @@ else:
     while d.weekday() >= 5:   # 保險：萬一排程意外在週末跑，往回找最近交易日
         d -= timedelta(days=1)
     TARGET = d.strftime("%Y-%m-%d")
- 
+
 print(f"🗓  Target date: {TARGET}")
- 
- 
+
+
 # ── HELPERS ─────────────────────────────────────────────────
 def make_entry(curr_val, prev_val, curr_date):
     if curr_val is None:
@@ -45,8 +45,8 @@ def make_entry(curr_val, prev_val, curr_date):
         "chg_pct": chg_pct,
         "date":    curr_date,
     }
- 
- 
+
+
 def treasury_get(target_date_str):
     """從 Treasury.gov 官方 API 抓 2Y/10Y/30Y 殖利率
     XML 結構：feed > entry > content > m:properties > d:BC_2YEAR ...
@@ -57,11 +57,11 @@ def treasury_get(target_date_str):
     for delta in [0, 1, 2]:
         m = d - timedelta(days=30*delta)
         months.add(m.strftime("%Y%m"))
- 
+
     D    = 'http://schemas.microsoft.com/ado/2007/08/dataservices'
     M    = 'http://schemas.microsoft.com/ado/2007/08/dataservices/metadata'
     rows = []
- 
+
     for ym in sorted(months, reverse=True):
         url = (f"https://home.treasury.gov/resource-center/data-chart-center"
                f"/interest-rates/pages/xml?data=daily_treasury_yield_curve"
@@ -91,24 +91,24 @@ def treasury_get(target_date_str):
             print(f"  📥 Treasury.gov {ym}: {count} 筆")
         except Exception as e:
             print(f"  ❌ Treasury.gov {ym}: {type(e).__name__}: {e}")
- 
+
     if not rows:
         print("  ⚠️  Treasury.gov 無有效資料")
         return None, None, None
- 
+
     rows.sort(key=lambda x: x[0], reverse=True)
     curr = rows[0]
     prev = rows[1] if len(rows) > 1 else None
     print(f"  ✅ curr={curr[0]} 2Y={curr[1]} 10Y={curr[2]} 30Y={curr[3]}")
- 
+
     def mk(idx):
         cv = curr[idx]
         pv = prev[idx] if prev else None
         return make_entry(cv, pv, curr[0]) if cv is not None else None
- 
+
     return mk(1), mk(2), mk(3)
- 
- 
+
+
 def yf_get(symbol, target_date_str):
     """用 yfinance 抓股票/指數，找最接近 target_date 的收盤價"""
     try:
@@ -152,41 +152,80 @@ def yf_get(symbol, target_date_str):
         except Exception as e2:
             print(f"  ❌ yfinance {symbol}: {e2}")
             return None
- 
- 
+
+
+FRED_API_KEY = "0d1cefb6a6e1f5cadc9a75d7fb9a350b"
+
 def move_get(target_date_str):
-    """直接打 Yahoo Finance chart API 抓 ^MOVE，繞過 yfinance library 的不穩定問題"""
-    try:
-        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE"
-        params = {"interval": "1d", "range": "10d"}
-        headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get(url, params=params, headers=headers, timeout=15)
-        r.raise_for_status()
-        j = r.json()
-        ts    = j["chart"]["result"][0]["timestamp"]
-        close = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
-        # 轉成 {date_str: close} dict，過濾 None
-        rows = []
-        for t, c in zip(ts, close):
-            if c is None:
-                continue
-            dt_str = datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")
-            rows.append((dt_str, c))
-        rows.sort(reverse=True)
-        # 找 <= target_date 的最新一筆
-        valid = [(dt, v) for dt, v in rows if dt <= target_date_str]
-        if not valid:
-            print(f"  ❌ MOVE API: no valid rows for {target_date_str}")
-            return None
-        curr_date, curr_val = valid[0]
-        prev_val = valid[1][1] if len(valid) > 1 else None
-        print(f"  ✅ MOVE API: {curr_val:.2f} ({curr_date})")
-        return make_entry(curr_val, prev_val, curr_date)
-    except Exception as e:
-        print(f"  ❌ MOVE API: {e}")
+    """抓 MOVE 指數：同時查 Yahoo Finance API 和 FRED，選日期較大（較新）的那筆"""
+
+    def from_yahoo():
+        try:
+            url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE"
+            params = {"interval": "1d", "range": "10d"}
+            headers = {"User-Agent": "Mozilla/5.0"}
+            r = requests.get(url, params=params, headers=headers, timeout=15)
+            r.raise_for_status()
+            j = r.json()
+            ts    = j["chart"]["result"][0]["timestamp"]
+            close = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+            rows = []
+            for t, c in zip(ts, close):
+                if c is None: continue
+                dt_str = datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")
+                rows.append((dt_str, c))
+            rows.sort(reverse=True)
+            valid = [(dt, v) for dt, v in rows if dt <= target_date_str]
+            if not valid: return None, None
+            return valid[0][0], valid  # (best_date, all_valid_rows)
+        except Exception as e:
+            print(f"  ⚠ MOVE Yahoo: {e}")
+            return None, None
+
+    def from_fred():
+        try:
+            url = "https://api.stlouisfed.org/fred/series/observations"
+            params = {
+                "series_id":       "MOVE",
+                "api_key":         FRED_API_KEY,
+                "file_type":       "json",
+                "sort_order":      "desc",
+                "observation_end": target_date_str,
+                "limit":           10,
+            }
+            r = requests.get(url, params=params, timeout=15)
+            r.raise_for_status()
+            obs = r.json().get("observations", [])
+            valid = [(o["date"], float(o["value"])) for o in obs
+                     if o["value"] not in (".", "") and o["date"] <= target_date_str]
+            if not valid: return None, None
+            return valid[0][0], valid
+        except Exception as e:
+            print(f"  ⚠ MOVE FRED: {e}")
+            return None, None
+
+    ydate, yrows = from_yahoo()
+    fdate, frows = from_fred()
+    print(f"  Yahoo date: {ydate or '—'}  FRED date: {fdate or '—'}")
+
+    # 選日期較大（較新）的來源
+    if ydate and fdate:
+        best_rows = yrows if ydate >= fdate else frows
+        src = "Yahoo" if ydate >= fdate else "FRED"
+    elif ydate:
+        best_rows, src = yrows, "Yahoo"
+    elif fdate:
+        best_rows, src = frows, "FRED"
+    else:
+        print(f"  ❌ MOVE: 兩個來源都無資料")
         return None
- 
- 
+
+    curr_date, curr_val = best_rows[0]
+    prev_val = best_rows[1][1] if len(best_rows) > 1 else None
+    print(f"  ✅ MOVE ({src}): {curr_val:.2f} ({curr_date})")
+    return make_entry(curr_val, prev_val, curr_date)
+
+
 # ── FETCH ALL ────────────────────────────────────────────────
 def fetch_all(target):
     result = {
@@ -194,22 +233,19 @@ def fetch_all(target):
         "target_date":  target,
     }
     errors = []
- 
+
     # VIX — yfinance ^VIX（與 MOVE 同步，無 FRED 延遲問題）
     print("📡 VIX...")
     d = yf_get("^VIX", target)
     result["vix"] = d
     print(f"  {'✅' if d else '❌'} VIX: {d['value'] if d else 'N/A'}")
- 
-    # MOVE — 直接打 Yahoo Finance API（yfinance ^MOVE 不穩定）
+
+    # MOVE — 同時查 Yahoo Finance API 和 FRED，選日期較新的那筆
     print("📡 MOVE...")
     d = move_get(target)
-    if not d:
-        print("  ⚠ MOVE API 失敗，fallback yfinance...")
-        d = yf_get("^MOVE", target)
     result["move"] = d
     print(f"  {'✅' if d else '❌'} MOVE: {d['value'] if d else 'N/A'}")
- 
+
     # 公債殖利率 — Treasury.gov 官方 API（無延遲、無需 API key）
     print("📡 2Y/10Y/30Y 公債（Treasury.gov）...")
     y2, y10, y30 = treasury_get(target)
@@ -219,7 +255,7 @@ def fetch_all(target):
     print(f"  {'✅' if y2  else '❌'} 2Y:  {y2['value']  if y2  else 'N/A'}%")
     print(f"  {'✅' if y10 else '❌'} 10Y: {y10['value'] if y10 else 'N/A'}%")
     print(f"  {'✅' if y30 else '❌'} 30Y: {y30['value'] if y30 else 'N/A'}%")
- 
+
     # 10Y-2Y 利差（直接計算）
     if result.get("y10") and result.get("y2"):
         spread = round((result["y10"]["value"] - result["y2"]["value"]) * 100, 2)
@@ -227,13 +263,13 @@ def fetch_all(target):
         print(f"  ✅ 10Y-2Y 利差: {spread} bps")
     else:
         result["spread"] = None
- 
+
     # SOX — yfinance ^SOX
     print("📡 SOX...")
     d = yf_get("^SOX", target)
     result["sox"] = d
     print(f"  {'✅' if d else '❌'} SOX: {d['value'] if d else 'N/A'}")
- 
+
     # 個股
     stocks_meta = {
         "NVDA": {"name": "輝達",     "emoji": "🟢", "grade": "IG1"},
@@ -250,29 +286,29 @@ def fetch_all(target):
             d.update(meta)
         result["stocks"][sym] = d
         print(f"  {'✅' if d else '❌'} {sym}: ${d['value'] if d else 'N/A'}")
- 
+
     if errors:
         result["errors"] = errors
- 
+
     return result
- 
- 
+
+
 # ── MAIN ─────────────────────────────────────────────────────
 if __name__ == "__main__":
     data = fetch_all(TARGET)
- 
+
     # 存成日期檔
     out_path = DATA_DIR / f"market_{TARGET}.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"\n✅ 已寫入 {out_path}")
- 
+
     # 同時更新 latest.json（給 HTML 今日頁面用）
     latest_path = DATA_DIR / "latest.json"
     with open(latest_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"✅ 已更新 {latest_path}")
- 
+
     # 輸出摘要
     print("\n📊 數據摘要:")
     if data.get("vix"):
