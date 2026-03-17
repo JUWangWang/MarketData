@@ -312,7 +312,8 @@ canvas{max-height:320px;}
   <div class="email-bar">
     <div class="email-bar-l">
       <b>📧 每日報告</b>
-      <div style="font-size:12px;margin-top:3px;" id="emlDateHint">—</div>
+      <div style="font-size:12px;margin-top:3px;" id="emlSubjectHint">—</div>
+      <div style="font-size:12px;margin-top:2px;" id="emlDateHint">—</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <span class="copy-toast" id="copyToast">✅ 已下載！</span>
@@ -831,6 +832,8 @@ function renderAll(data){
   renderCDSTable(data);
   const hint = document.getElementById('emlDateHint');
   if(hint) hint.textContent = `${fmtDisp(selDate)} 金融市場即時監控指標如下：`;
+  const hint2 = document.getElementById('emlSubjectHint');
+  if(hint2) hint2.textContent = `〔證券〕金融市場即時監控指標_${fmtDisp(selDate)}`;
 }
 function showNoData(){
   const card=document.getElementById('summaryCard'); if(card) card.style.display='none';
