@@ -312,7 +312,7 @@ canvas{max-height:320px;}
   <div class="email-bar">
     <div class="email-bar-l">
       <b>📧 每日報告</b>
-      <div style="font-size:12px;margin-top:3px;">產生 .eml 信件檔，雙擊用 Outlook 直接開啟寄出</div>
+      <div style="font-size:12px;margin-top:3px;" id="emlDateHint">—</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <span class="copy-toast" id="copyToast">✅ 已下載！</span>
@@ -829,6 +829,8 @@ function renderAll(data){
   renderMonTable(data);
   renderStkTable(data);
   renderCDSTable(data);
+  const hint = document.getElementById('emlDateHint');
+  if(hint) hint.textContent = `${fmtDisp(selDate)} 金融市場即時監控指標如下：`;
 }
 function showNoData(){
   const card=document.getElementById('summaryCard'); if(card) card.style.display='none';
