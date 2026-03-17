@@ -846,11 +846,11 @@ function buildEmailHTML(){
   const tv=CFG.thresholds?.vix||{warn:20,danger:30};
   const tm=CFG.thresholds?.move||{warn:110,danger:120};
 
-  const hdrStyle='background:#1a2b5e;color:#ffffff;padding:8px 10px;font-size:13px;font-weight:bold;text-align:center;border:1px solid #2a3f80;';
-  const thStyle='background:#2a3f80;color:#ffffff;padding:7px 10px;font-size:12px;font-weight:bold;text-align:center;border:1px solid #3a4f90;mso-line-height-rule:exactly;';
-  const thLStyle='background:#2a3f80;color:#ffffff;padding:7px 10px;font-size:12px;font-weight:bold;text-align:left;border:1px solid #3a4f90;mso-line-height-rule:exactly;';
-  const tdStyle='padding:6px 10px;font-size:12px;border:1px solid #dde;text-align:center;';
-  const tdLStyle='padding:6px 10px;font-size:12px;border:1px solid #dde;text-align:left;';
+  const hdrStyle='background:#1a2b5e;color:#ffffff;padding:6px 10px;font-size:14px;font-weight:bold;text-align:center;border:1px solid #2a3f80;';
+  const thStyle='background:#2a3f80;color:#ffffff;padding:4px 10px;font-size:13px;font-weight:bold;text-align:center;border:1px solid #3a4f90;mso-line-height-rule:exactly;';
+  const thLStyle='background:#2a3f80;color:#ffffff;padding:5px 10px;font-size:13px;font-weight:bold;text-align:left;border:1px solid #3a4f90;mso-line-height-rule:exactly;';
+  const tdStyle='padding:4px 10px;font-size:13px;border:1px solid #dde;text-align:center;';
+  const tdLStyle='padding:4px 10px;font-size:13px;border:1px solid #dde;text-align:left;';
 
   // Outlook 不支援 border-radius，改用彩色文字符號 ●
   const dot=(cl)=>{
