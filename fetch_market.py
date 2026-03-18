@@ -164,48 +164,57 @@ def move_get(target_date_str):
 
     # 方法1：target 是今日，用 quoteSummary 抓最新報價
     if target_date_str == today_str:
+        for host in ["query2.finance.yahoo.com", "query1.finance.yahoo.com"]:
+            try:
+                url = f"https://{host}/v10/finance/quoteSummary/%5EMOVE"
+                params = {"modules": "price"}
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "Accept": "application/json",
+                    "Referer": "https://finance.yahoo.com/",
+                }
+                r = requests.get(url, params=params, headers=headers, timeout=15)
+                r.raise_for_status()
+                j = r.json()
+                price = j["quoteSummary"]["result"][0]["price"]
+                curr_val  = price["regularMarketPrice"]["raw"]
+                prev_val  = price["regularMarketPreviousClose"]["raw"]
+                market_ts = price["regularMarketTime"]["raw"]
+                curr_date = datetime.utcfromtimestamp(market_ts).strftime("%Y-%m-%d")
+                print(f"  ✅ MOVE (quote {host}): {curr_val:.2f} ({curr_date})")
+                return make_entry(curr_val, prev_val, curr_date)
+            except Exception as e:
+                print(f"  ⚠ MOVE quote {host}: {e}")
+
+    # 方法2：chart API 抓歷史資料
+    for host in ["query2.finance.yahoo.com", "query1.finance.yahoo.com"]:
         try:
-            url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/%5EMOVE"
-            params = {"modules": "price"}
-            headers = {"User-Agent": "Mozilla/5.0"}
+            url = f"https://{host}/v8/finance/chart/%5EMOVE"
+            params = {"interval": "1d", "range": "10d"}
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "application/json",
+                "Referer": "https://finance.yahoo.com/",
+            }
             r = requests.get(url, params=params, headers=headers, timeout=15)
             r.raise_for_status()
             j = r.json()
-            price = j["quoteSummary"]["result"][0]["price"]
-            curr_val  = price["regularMarketPrice"]["raw"]
-            prev_val  = price["regularMarketPreviousClose"]["raw"]
-            # 用實際報價時間轉換日期，避免時區問題（GMT+8 早上抓到的是前日收盤）
-            market_ts = price["regularMarketTime"]["raw"]
-            curr_date = datetime.utcfromtimestamp(market_ts).strftime("%Y-%m-%d")
-            print(f"  ✅ MOVE (quote API): {curr_val:.2f} ({curr_date})")
-            return make_entry(curr_val, prev_val, curr_date)
+            ts    = j["chart"]["result"][0]["timestamp"]
+            close = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+            rows = []
+            for t, c in zip(ts, close):
+                if c is None: continue
+                dt_str = datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")
+                rows.append((dt_str, c))
+            rows.sort(reverse=True)
+            valid = [(dt, v) for dt, v in rows if dt <= target_date_str]
+            if valid:
+                curr_date, curr_val = valid[0]
+                prev_val = valid[1][1] if len(valid) > 1 else None
+                print(f"  ✅ MOVE (chart {host}): {curr_val:.2f} ({curr_date})")
+                return make_entry(curr_val, prev_val, curr_date)
         except Exception as e:
-            print(f"  ⚠ MOVE quote API: {e}")
-
-    # 方法2：chart API 抓歷史資料
-    try:
-        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE"
-        params = {"interval": "1d", "range": "10d"}
-        headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get(url, params=params, headers=headers, timeout=15)
-        r.raise_for_status()
-        j = r.json()
-        ts    = j["chart"]["result"][0]["timestamp"]
-        close = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
-        rows = []
-        for t, c in zip(ts, close):
-            if c is None: continue
-            dt_str = datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")
-            rows.append((dt_str, c))
-        rows.sort(reverse=True)
-        valid = [(dt, v) for dt, v in rows if dt <= target_date_str]
-        if valid:
-            curr_date, curr_val = valid[0]
-            prev_val = valid[1][1] if len(valid) > 1 else None
-            print(f"  ✅ MOVE (chart API): {curr_val:.2f} ({curr_date})")
-            return make_entry(curr_val, prev_val, curr_date)
-    except Exception as e:
-        print(f"  ⚠ MOVE chart API: {e}")
+            print(f"  ⚠ MOVE chart {host}: {e}")
 
     # 方法3：fallback yf_get
     print(f"  ⚠ MOVE fallback yf_get...")
