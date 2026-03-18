@@ -14,7 +14,6 @@ from pathlib import Path
 import yfinance as yf
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
 
 # ── CONFIG ──────────────────────────────────────────────────
 DATA_DIR = Path(__file__).parent / "data"
@@ -155,8 +154,35 @@ def yf_get(symbol, target_date_str):
             return None
 
 
-def move_get_yahoo(target_date_str):
-    """Yahoo Finance chart API 抓 ^MOVE"""
+def move_get(target_date_str):
+    """抓 MOVE 指數：
+    - 若 target 是今日 → 用 quoteSummary API 抓當日最新報價（不 lag）
+    - 否則 → 用 chart API 抓歷史資料
+    - 以上失敗 → fallback yf_get
+    """
+    today_str = date.today().strftime("%Y-%m-%d")
+
+    # 方法1：target 是今日，用 quoteSummary 抓最新報價
+    if target_date_str == today_str:
+        try:
+            url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/%5EMOVE"
+            params = {"modules": "price"}
+            headers = {"User-Agent": "Mozilla/5.0"}
+            r = requests.get(url, params=params, headers=headers, timeout=15)
+            r.raise_for_status()
+            j = r.json()
+            price = j["quoteSummary"]["result"][0]["price"]
+            curr_val  = price["regularMarketPrice"]["raw"]
+            prev_val  = price["regularMarketPreviousClose"]["raw"]
+            # 用實際報價時間轉換日期，避免時區問題（GMT+8 早上抓到的是前日收盤）
+            market_ts = price["regularMarketTime"]["raw"]
+            curr_date = datetime.utcfromtimestamp(market_ts).strftime("%Y-%m-%d")
+            print(f"  ✅ MOVE (quote API): {curr_val:.2f} ({curr_date})")
+            return make_entry(curr_val, prev_val, curr_date)
+        except Exception as e:
+            print(f"  ⚠ MOVE quote API: {e}")
+
+    # 方法2：chart API 抓歷史資料
     try:
         url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE"
         params = {"interval": "1d", "range": "10d"}
@@ -173,81 +199,22 @@ def move_get_yahoo(target_date_str):
             rows.append((dt_str, c))
         rows.sort(reverse=True)
         valid = [(dt, v) for dt, v in rows if dt <= target_date_str]
-        if not valid: return None, []
-        return valid[0][0], valid
+        if valid:
+            curr_date, curr_val = valid[0]
+            prev_val = valid[1][1] if len(valid) > 1 else None
+            print(f"  ✅ MOVE (chart API): {curr_val:.2f} ({curr_date})")
+            return make_entry(curr_val, prev_val, curr_date)
     except Exception as e:
-        print(f"  ⚠ MOVE Yahoo: {e}")
-        return None, []
+        print(f"  ⚠ MOVE chart API: {e}")
 
-
-def move_get_investing(target_date_str):
-    """Investing.com 爬蟲抓 MOVE 歷史資料（作為備援來源）"""
-    try:
-        url = "https://www.investing.com/indices/ice-bofaml-move-historical-data"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Referer": "https://www.investing.com/",
-        }
-        r = requests.get(url, headers=headers, timeout=20)
-        r.raise_for_status()
-        soup = BeautifulSoup(r.text, "html.parser")
-
-        # 找所有 table，逐一嘗試解析日期+價格
-        rows = []
-        for table in soup.find_all("table"):
-            for tr in table.find_all("tr"):
-                tds = tr.find_all("td")
-                if len(tds) < 2: continue
-                try:
-                    date_str = tds[0].get_text(strip=True)
-                    price_str = tds[1].get_text(strip=True).replace(",", "")
-                    dt = datetime.strptime(date_str, "%b %d, %Y").strftime("%Y-%m-%d")
-                    val = float(price_str)
-                    if dt <= target_date_str:
-                        rows.append((dt, val))
-                except Exception:
-                    continue
-            if rows: break  # 找到資料就停
-
-        if not rows:
-            print(f"  ⚠ MOVE Investing: 找不到資料表格")
-            return None, []
-
-        rows.sort(reverse=True)
-        print(f"  ✅ MOVE Investing: 找到 {len(rows)} 筆，最新 {rows[0][0]}")
-        return rows[0][0], rows
-    except Exception as e:
-        print(f"  ⚠ MOVE Investing: {e}")
-        return None, []
-
-
-def move_get(target_date_str):
-    """抓 MOVE 指數：同時查 Yahoo Finance 和 Investing.com，選日期較新的那筆"""
-    ydate, yrows = move_get_yahoo(target_date_str)
-    idate, irows = move_get_investing(target_date_str)
-    print(f"  Yahoo: {ydate or '—'}  Investing: {idate or '—'}")
-
-    # 選日期較大（較新）的來源
-    if ydate and idate:
-        if ydate >= idate:
-            best_rows, src = yrows, "Yahoo"
-        else:
-            best_rows, src = irows, "Investing"
-    elif ydate:
-        best_rows, src = yrows, "Yahoo"
-    elif idate:
-        best_rows, src = irows, "Investing"
+    # 方法3：fallback yf_get
+    print(f"  ⚠ MOVE fallback yf_get...")
+    result = yf_get("^MOVE", target_date_str)
+    if result:
+        print(f"  ✅ MOVE (yf_get): {result['value']} ({result['date']})")
     else:
-        print(f"  ❌ MOVE: 兩個來源都無資料")
-        return None
-
-    curr_date, curr_val = best_rows[0]
-    prev_val = best_rows[1][1] if len(best_rows) > 1 else None
-    print(f"  ✅ MOVE ({src}): {curr_val:.2f} ({curr_date})")
-    return make_entry(curr_val, prev_val, curr_date)
+        print(f"  ❌ MOVE: 所有來源都失敗")
+    return result
 
 
 # ── FETCH ALL ────────────────────────────────────────────────
