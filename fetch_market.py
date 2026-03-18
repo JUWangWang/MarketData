@@ -195,37 +195,29 @@ def move_get_investing(target_date_str):
         r.raise_for_status()
         soup = BeautifulSoup(r.text, "html.parser")
 
-        # 找歷史資料表格
-        table = soup.find("table", {"data-test": "historical-data-table"}) \
-             or soup.find("table", id=lambda x: x and "historical" in str(x).lower()) \
-             or soup.find("table", class_=lambda x: x and "historical" in str(x).lower())
-        if not table:
-            # 嘗試找任何含日期和價格的表格
-            tables = soup.find_all("table")
-            for t in tables:
-                headers_row = t.find("tr")
-                if headers_row and "Price" in headers_row.text and "Date" in headers_row.text:
-                    table = t
-                    break
-        if not table:
+        # 找所有 table，逐一嘗試解析日期+價格
+        rows = []
+        for table in soup.find_all("table"):
+            for tr in table.find_all("tr"):
+                tds = tr.find_all("td")
+                if len(tds) < 2: continue
+                try:
+                    date_str = tds[0].get_text(strip=True)
+                    price_str = tds[1].get_text(strip=True).replace(",", "")
+                    dt = datetime.strptime(date_str, "%b %d, %Y").strftime("%Y-%m-%d")
+                    val = float(price_str)
+                    if dt <= target_date_str:
+                        rows.append((dt, val))
+                except Exception:
+                    continue
+            if rows: break  # 找到資料就停
+
+        if not rows:
             print(f"  ⚠ MOVE Investing: 找不到資料表格")
             return None, []
 
-        rows = []
-        for tr in table.find_all("tr")[1:]:  # 跳過表頭
-            tds = tr.find_all("td")
-            if len(tds) < 2: continue
-            try:
-                date_str = tds[0].get_text(strip=True)  # e.g. "Mar 14, 2026"
-                price_str = tds[1].get_text(strip=True).replace(",", "")
-                dt = datetime.strptime(date_str, "%b %d, %Y").strftime("%Y-%m-%d")
-                val = float(price_str)
-                if dt <= target_date_str:
-                    rows.append((dt, val))
-            except Exception:
-                continue
         rows.sort(reverse=True)
-        if not rows: return None, []
+        print(f"  ✅ MOVE Investing: 找到 {len(rows)} 筆，最新 {rows[0][0]}")
         return rows[0][0], rows
     except Exception as e:
         print(f"  ⚠ MOVE Investing: {e}")
