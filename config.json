@@ -43,7 +43,7 @@
       "symbol": "SMCI",
       "name": "超微電腦",
       "emoji": "⚡",
-      "grade": "HY1"
+      "grade": "HY3"
     },
     {
       "symbol": "ARM",
@@ -64,7 +64,5 @@
     "_說明_refresh": "頁面自動重新讀取 JSON 的間隔（毫秒）。3600000 = 1小時",
     "auto_refresh_ms": 3600000
   },
-  "recipients": [
-    
-  ]
+  "recipients": []
 }
