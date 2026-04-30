@@ -43,7 +43,7 @@
       "symbol": "SMCI",
       "name": "超微電腦",
       "emoji": "⚡",
-      "grade": "HY3"
+      "grade": "HY2"
     },
     {
       "symbol": "ARM",
@@ -55,7 +55,7 @@
       "symbol": "TSLA",
       "name": "特斯拉",
       "emoji": "🚗",
-      "grade": "IG2"
+      "grade": "IG1"
     }
   ],
   "display": {
