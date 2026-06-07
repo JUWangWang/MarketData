@@ -16,7 +16,7 @@
     "date": "2026-05-14"
   },
   "y2": {
-    "value": 4.0,
+    "value": 4,
     "prev": 3.98,
     "chg_abs": 0.02,
     "chg_pct": 0.5025,
@@ -36,7 +36,7 @@
     "chg_pct": -0.1988,
     "date": "2026-05-14"
   },
-  "spread": 47.0,
+  "spread": 47,
   "sox": {
     "value": 12073.7793,
     "prev": 12017.9805,
@@ -51,8 +51,8 @@
       "chg_abs": 9.910004,
       "chg_pct": 4.3883,
       "date": "2026-05-14",
-      "name": "輝達",
-      "emoji": "🟢",
+      "name": "è¼é",
+      "emoji": "ð¢",
       "grade": "IG1"
     },
     "TSM": {
@@ -61,18 +61,18 @@
       "chg_abs": 17.920013,
       "chg_pct": 4.4822,
       "date": "2026-05-14",
-      "name": "台積電",
-      "emoji": "🔵",
+      "name": "å°ç©é»",
+      "emoji": "ðµ",
       "grade": "IG1"
     },
     "SMCI": {
       "value": 33.03,
-      "prev": 32.0,
+      "prev": 32,
       "chg_abs": 1.029999,
       "chg_pct": 3.2187,
       "date": "2026-05-14",
-      "name": "超微電腦",
-      "emoji": "⚡",
+      "name": "è¶å¾®é»è¦",
+      "emoji": "â¡",
       "grade": "HY1"
     },
     "ARM": {
@@ -81,8 +81,8 @@
       "chg_abs": 7.289993,
       "chg_pct": 3.2955,
       "date": "2026-05-14",
-      "name": "安謀控股",
-      "emoji": "💻",
+      "name": "å®è¬æ§è¡",
+      "emoji": "ð»",
       "grade": "IG1"
     },
     "TSLA": {
@@ -91,9 +91,57 @@
       "chg_abs": -1.970001,
       "chg_pct": -0.4424,
       "date": "2026-05-14",
-      "name": "特斯拉",
-      "emoji": "🚗",
+      "name": "ç¹æ¯æ",
+      "emoji": "ð",
       "grade": "IG3"
     }
-  }
+  },
+  "cds": {
+    "US": {
+      "value": 24.38,
+      "prev": null,
+      "chg_abs": null,
+      "chg_pct": null,
+      "date": "2026-05-14",
+      "name": "美國",
+      "flag": "🇺🇸"
+    },
+    "KR": {
+      "value": 41.92,
+      "prev": null,
+      "chg_abs": null,
+      "chg_pct": null,
+      "date": "2026-05-14",
+      "name": "南韓",
+      "flag": "🇰🇷"
+    },
+    "JP": {
+      "value": 27.68,
+      "prev": null,
+      "chg_abs": null,
+      "chg_pct": null,
+      "date": "2026-05-14",
+      "name": "日本",
+      "flag": "🇯🇵"
+    },
+    "CN": {
+      "value": 41.75,
+      "prev": null,
+      "chg_abs": null,
+      "chg_pct": null,
+      "date": "2026-05-14",
+      "name": "中國",
+      "flag": "🇨🇳"
+    },
+    "HK": {
+      "value": 26.38,
+      "prev": null,
+      "chg_abs": null,
+      "chg_pct": null,
+      "date": "2026-05-14",
+      "name": "香港",
+      "flag": "🇭🇰"
+    }
+  },
+  "cds_updated_at": "2026-06-07T01:36:15.901Z"
 }
