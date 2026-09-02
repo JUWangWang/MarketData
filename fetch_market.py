@@ -10,6 +10,9 @@ import os
 import sys
 from datetime import datetime, timedelta, date
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+import pandas_market_calendars as mcal
 
 import yfinance as yf
 import pandas as pd
@@ -19,17 +22,56 @@ import requests
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-# 手動指定日期（補抓歷史）
-if len(sys.argv) > 1:
-    TARGET = sys.argv[1]  # "2026-03-07"
-else:
-    # Actions 在 UTC 22:30 執行（美股已收盤），date.today() 即為當天交易日
-    d = date.today()
-    while d.weekday() >= 5:   # 保險：萬一排程意外在週末跑，往回找最近交易日
-        d -= timedelta(days=1)
-    TARGET = d.strftime("%Y-%m-%d")
+# ── TARGET DATE ──────────────────────────────────────────────
+def get_target_date():
+    """
+    手動執行：
+        python fetch_market.py 2026-09-02
+        → 指定抓 2026-09-02
 
-print(f"🗓  Target date: {TARGET}")
+    自動執行：
+        以台灣時間為基準，
+        找「今天以前最近一個 NYSE 正式交易日」。
+
+    例如：
+        台灣 2026-09-03 07:30
+        → TARGET = 2026-09-02
+
+        台灣週一早上
+        → TARGET = 上週五
+
+        美國休市後隔天
+        → 自動跳過美國假日
+    """
+    if len(sys.argv) > 1:
+        target = sys.argv[1]
+        datetime.strptime(target, "%Y-%m-%d")  # 驗證格式
+        return target
+
+    now_tw = datetime.now(ZoneInfo("Asia/Taipei"))
+
+    nyse = mcal.get_calendar("NYSE")
+
+    start_date = now_tw.date() - timedelta(days=14)
+    end_date = now_tw.date() - timedelta(days=1)
+
+    schedule = nyse.schedule(
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    if schedule.empty:
+        raise RuntimeError("找不到最近的 NYSE 交易日")
+
+    last_trading_day = schedule.index[-1].date()
+
+    return last_trading_day.strftime("%Y-%m-%d")
+
+
+TARGET = get_target_date()
+
+print(f"🕒 Taiwan time: {datetime.now(ZoneInfo('Asia/Taipei')).isoformat()}")
+print(f"🗓  Target market date: {TARGET}")
 
 
 # ── HELPERS ─────────────────────────────────────────────────
@@ -292,10 +334,80 @@ def fetch_all(target):
 
     return result
 
+# ── DATA DATE VALIDATION ─────────────────────────────────────
+def validate_data_dates(data, target):
+    """
+    確認抓到的資料確實屬於 TARGET。
+
+    若任一主要市場資料仍停留在前一日：
+    → 視為資料來源尚未更新完成
+    → 不寫 market_YYYY-MM-DD.json
+    → 不更新 latest.json
+    → 回傳失敗，讓 GitHub Actions 稍後重試
+    """
+
+    checks = {}
+
+    # 市場指標
+    checks["VIX"] = data.get("vix")
+    checks["MOVE"] = data.get("move")
+    checks["SOX"] = data.get("sox")
+
+    # 美國公債
+    checks["2Y"] = data.get("y2")
+    checks["10Y"] = data.get("y10")
+    checks["30Y"] = data.get("y30")
+
+    # 個股
+    for symbol, stock in data.get("stocks", {}).items():
+        checks[symbol] = stock
+
+    failed = []
+
+    print("\n🔎 資料日期驗證")
+
+    for name, item in checks.items():
+
+        if item is None:
+            failed.append(f"{name}: 無資料")
+            print(f"  ❌ {name}: 無資料")
+            continue
+
+        actual_date = item.get("date")
+
+        if actual_date != target:
+            failed.append(
+                f"{name}: expected={target}, actual={actual_date}"
+            )
+            print(
+                f"  ❌ {name}: {actual_date} "
+                f"(應為 {target})"
+            )
+        else:
+            print(f"  ✅ {name}: {actual_date}")
+
+    if failed:
+        print("\n⚠️ 市場資料尚未全部更新完成")
+        print("本次不寫入任何 JSON，等待 GitHub Actions 重試。")
+
+        for msg in failed:
+            print(f"  - {msg}")
+
+        return False
+
+    print("\n✅ 所有市場資料日期均正確")
+
+    return True
 
 # ── MAIN ─────────────────────────────────────────────────────
 if __name__ == "__main__":
     data = fetch_all(TARGET)
+
+    # ── 寫檔前先驗證日期 ─────────────────────────────
+    if not validate_data_dates(data, TARGET):
+        print("\n❌ DATA_NOT_READY")
+        print("資料日期尚未全部到達 TARGET，本次執行失敗。")
+        sys.exit(2)
 
     # 存成日期檔
     out_path = DATA_DIR / f"market_{TARGET}.json"
