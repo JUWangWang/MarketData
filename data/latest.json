@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-03T23:58:49.247680Z",
+  "generated_at": "2026-09-04T01:13:14.488723Z",
   "target_date": "2026-09-03",
   "vix": {
     "value": 14.32,
@@ -46,50 +46,50 @@
   },
   "stocks": {
     "NVDA": {
-      "value": 228.45,
+      "value": NaN,
       "prev": 224.41,
-      "chg_abs": 4.039993,
-      "chg_pct": 1.8003,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
       "name": "輝達",
       "emoji": "🟢",
       "grade": "IG1"
     },
     "TSM": {
-      "value": 417.01,
+      "value": NaN,
       "prev": 415.5,
-      "chg_abs": 1.51001,
-      "chg_pct": 0.3634,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
       "name": "台積電",
       "emoji": "🔵",
       "grade": "IG1"
     },
     "SMCI": {
-      "value": 37.87,
+      "value": NaN,
       "prev": 37.0,
-      "chg_abs": 0.869999,
-      "chg_pct": 2.3513,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
       "name": "超微電腦",
       "emoji": "⚡",
       "grade": "HY1"
     },
     "ARM": {
-      "value": 242.59,
+      "value": NaN,
       "prev": 234.86,
-      "chg_abs": 7.729996,
-      "chg_pct": 3.2913,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
       "name": "安謀控股",
       "emoji": "💻",
       "grade": "IG1"
     },
     "TSLA": {
-      "value": 376.365,
+      "value": NaN,
       "prev": 357.01,
-      "chg_abs": 19.35498,
-      "chg_pct": 5.4214,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
       "name": "特斯拉",
       "emoji": "🚗",

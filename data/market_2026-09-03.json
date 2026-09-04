@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-03T23:58:49.247680Z",
+  "generated_at": "2026-09-04T01:13:14.488723Z",
   "target_date": "2026-09-03",
   "vix": {
     "value": 14.32,
@@ -36,7 +36,7 @@
     "chg_pct": -0.3795,
     "date": "2026-09-03"
   },
-  "spread": 43,
+  "spread": 43.0,
   "sox": {
     "value": 11352.1289,
     "prev": 11339.25,
@@ -46,102 +46,54 @@
   },
   "stocks": {
     "NVDA": {
-      "value": 228.45,
+      "value": NaN,
       "prev": 224.41,
-      "chg_abs": 4.039993,
-      "chg_pct": 1.8003,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
-      "name": "è¼é",
-      "emoji": "ð¢",
+      "name": "輝達",
+      "emoji": "🟢",
       "grade": "IG1"
     },
     "TSM": {
-      "value": 417.01,
+      "value": NaN,
       "prev": 415.5,
-      "chg_abs": 1.51001,
-      "chg_pct": 0.3634,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
-      "name": "å°ç©é»",
-      "emoji": "ðµ",
+      "name": "台積電",
+      "emoji": "🔵",
       "grade": "IG1"
     },
     "SMCI": {
-      "value": 37.87,
-      "prev": 37,
-      "chg_abs": 0.869999,
-      "chg_pct": 2.3513,
+      "value": NaN,
+      "prev": 37.0,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
-      "name": "è¶å¾®é»è¦",
-      "emoji": "â¡",
+      "name": "超微電腦",
+      "emoji": "⚡",
       "grade": "HY1"
     },
     "ARM": {
-      "value": 242.59,
+      "value": NaN,
       "prev": 234.86,
-      "chg_abs": 7.729996,
-      "chg_pct": 3.2913,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
-      "name": "å®è¬æ§è¡",
-      "emoji": "ð»",
+      "name": "安謀控股",
+      "emoji": "💻",
       "grade": "IG1"
     },
     "TSLA": {
-      "value": 376.365,
+      "value": NaN,
       "prev": 357.01,
-      "chg_abs": 19.35498,
-      "chg_pct": 5.4214,
+      "chg_abs": NaN,
+      "chg_pct": NaN,
       "date": "2026-09-03",
-      "name": "ç¹æ¯æ",
-      "emoji": "ð",
+      "name": "特斯拉",
+      "emoji": "🚗",
       "grade": "IG3"
     }
-  },
-  "cds": {
-    "US": {
-      "value": 36.44,
-      "prev": null,
-      "chg_abs": null,
-      "chg_pct": null,
-      "date": "2026-09-03",
-      "name": "美國",
-      "flag": "🇺🇸"
-    },
-    "KR": {
-      "value": 22.1,
-      "prev": null,
-      "chg_abs": null,
-      "chg_pct": null,
-      "date": "2026-09-03",
-      "name": "南韓",
-      "flag": "🇰🇷"
-    },
-    "JP": {
-      "value": 24.55,
-      "prev": null,
-      "chg_abs": null,
-      "chg_pct": null,
-      "date": "2026-09-03",
-      "name": "日本",
-      "flag": "🇯🇵"
-    },
-    "CN": {
-      "value": 35.33,
-      "prev": null,
-      "chg_abs": null,
-      "chg_pct": null,
-      "date": "2026-09-03",
-      "name": "中國",
-      "flag": "🇨🇳"
-    },
-    "HK": {
-      "value": 25.21,
-      "prev": null,
-      "chg_abs": null,
-      "chg_pct": null,
-      "date": "2026-09-03",
-      "name": "香港",
-      "flag": "🇭🇰"
-    }
-  },
-  "cds_updated_at": "2026-09-04T00:40:49.915Z"
+  }
 }
