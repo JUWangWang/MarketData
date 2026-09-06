@@ -2,9 +2,13 @@ name: Fetch Market Data Daily
 
 on:
   schedule:
-    # UTC 23:30 = 台灣時間 07:30
-    # UTC 週一～週五 = 台灣週二～週六
-    # 對應抓取美股週一～週五交易資料
+    # =========================================================
+    # GitHub cron 使用 UTC
+    #
+    # 台灣 07:30 = UTC 前一天 23:30
+    # UTC Mon-Fri → 台灣 Tue-Sat
+    # =========================================================
+
     # 台灣時間 07:30
     - cron: '30 23 * * 1-5'
 
@@ -21,24 +25,51 @@ on:
         required: false
         default: ''
 
+
+# =============================================================
+# 避免 GitHub 排程延遲時，多個 workflow 同時寫 data/
+# 不取消正在執行中的工作，而是排隊等待
+# =============================================================
+concurrency:
+  group: market-data-daily
+  cancel-in-progress: false
+
+
 jobs:
   fetch-and-push:
+
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
 
     steps:
+
+      # =======================================================
+      # 1. Checkout
+      # =======================================================
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
+
+      # =======================================================
+      # 2. Python
+      # =======================================================
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+
+      # =======================================================
+      # 3. Dependencies
+      # =======================================================
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
+
           pip install \
             yfinance>=0.2.40 \
             requests>=2.31.0 \
@@ -46,39 +77,266 @@ jobs:
             beautifulsoup4>=4.12.0 \
             pandas_market_calendars>=4.4.0
 
-      - name: Fetch market data with retry
+
+      # =======================================================
+      # 4. 決定本次 TARGET
+      #
+      # 手動指定：
+      #   使用 target_date
+      #
+      # 自動排程：
+      #   找台灣今天以前最近一個 NYSE 交易日
+      # =======================================================
+      - name: Determine target date
+        id: target
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && \
+             [ -n "${{ github.event.inputs.target_date }}" ]; then
+
+            TARGET="${{ github.event.inputs.target_date }}"
+
+          else
+
+            TARGET=$(python - <<'PY'
+          from datetime import datetime, timedelta
+          from zoneinfo import ZoneInfo
+          import pandas_market_calendars as mcal
+
+          now_tw = datetime.now(ZoneInfo("Asia/Taipei"))
+
+          nyse = mcal.get_calendar("NYSE")
+
+          schedule = nyse.schedule(
+              start_date=now_tw.date() - timedelta(days=14),
+              end_date=now_tw.date() - timedelta(days=1)
+          )
+
+          if schedule.empty:
+              raise RuntimeError("找不到最近的 NYSE 交易日")
+
+          print(
+              schedule.index[-1]
+              .date()
+              .strftime("%Y-%m-%d")
+          )
+          PY
+          )
+
+          fi
+
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+
+          echo "======================================"
+          echo "Target market date: $TARGET"
+          echo "Event: ${{ github.event_name }}"
+          echo "======================================"
+
+
+      # =======================================================
+      # 5. 自動排程先檢查：
+      #    TARGET 的資料是否已經存在且完整
+      #
+      # 手動 workflow_dispatch：
+      #    一律允許重新抓，不跳過
+      # =======================================================
+      - name: Check existing market data
+        id: existing
+        shell: bash
+        run: |
+          TARGET="${{ steps.target.outputs.target }}"
+
+          # 手動執行一律強制抓取
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ Manual run — force fetch."
+            exit 0
+          fi
+
+          python - "$TARGET" >> "$GITHUB_OUTPUT" <<'PY'
+          import json
+          import math
+          import sys
+          from pathlib import Path
+
+          target = sys.argv[1]
+
+          path = Path("data") / f"market_{target}.json"
+
+          required = [
+              "vix",
+              "move",
+              "sox",
+              "y2",
+              "y10",
+              "y30",
+          ]
+
+          required_stocks = [
+              "NVDA",
+              "TSM",
+              "SMCI",
+              "ARM",
+              "TSLA",
+          ]
+
+
+          def valid_number(value):
+              try:
+                  return math.isfinite(float(value))
+              except (TypeError, ValueError):
+                  return False
+
+
+          def valid_item(item):
+              if not isinstance(item, dict):
+                  return False
+
+              if item.get("date") != target:
+                  return False
+
+              if not valid_number(item.get("value")):
+                  return False
+
+              return True
+
+
+          if not path.exists():
+              print("valid=false")
+              sys.exit(0)
+
+
+          try:
+              with open(
+                  path,
+                  "r",
+                  encoding="utf-8"
+              ) as f:
+                  data = json.load(f)
+
+          except Exception:
+              print("valid=false")
+              sys.exit(0)
+
+
+          if data.get("target_date") != target:
+              print("valid=false")
+              sys.exit(0)
+
+
+          for key in required:
+              if not valid_item(data.get(key)):
+                  print("valid=false")
+                  sys.exit(0)
+
+
+          stocks = data.get("stocks", {})
+
+          for symbol in required_stocks:
+              if not valid_item(
+                  stocks.get(symbol)
+              ):
+                  print("valid=false")
+                  sys.exit(0)
+
+
+          print("valid=true")
+          PY
+
+
+      # =======================================================
+      # 6. 顯示是否跳過
+      # =======================================================
+      - name: Show existing data status
+        run: |
+          echo "Target: ${{ steps.target.outputs.target }}"
+          echo "Existing valid data: ${{ steps.existing.outputs.valid }}"
+
+          if [ "${{ steps.existing.outputs.valid }}" = "true" ]; then
+            echo "✅ Valid market data already exists."
+            echo "This scheduled run will skip fetching."
+          else
+            echo "ℹ️ Market data needs to be fetched."
+          fi
+
+
+      # =======================================================
+      # 7. 抓資料
+      #
+      # 重要：
+      # 每一個 cron 只嘗試一次
+      # 不再 sleep 20 分鐘
+      #
+      # 07:30 fail → 08:00 再試
+      # 08:00 fail → 08:30 再試
+      # =======================================================
+      - name: Fetch market data
+        if: steps.existing.outputs.valid != 'true'
         env:
           FRED_KEY: ${{ secrets.FRED_KEY }}
         run: |
-          for attempt in 1 2 3
-          do
-            echo "======================================"
-            echo "Market data attempt: $attempt / 3"
-            echo "======================================"
+          TARGET="${{ steps.target.outputs.target }}"
 
-            if [ -n "${{ github.event.inputs.target_date }}" ]; then
-              python fetch_market.py "${{ github.event.inputs.target_date }}" && exit 0
-            else
-              python fetch_market.py && exit 0
-            fi
+          echo "======================================"
+          echo "Fetching market data"
+          echo "Target: $TARGET"
+          echo "======================================"
 
-            if [ "$attempt" -lt 3 ]; then
-              echo "Data not ready. Retry after 20 minutes..."
-              sleep 1200
-            fi
-          done
+          python fetch_market.py "$TARGET"
 
-          echo "Market data still not ready after 3 attempts."
-          exit 1
 
+      # =======================================================
+      # 8. Commit / Push
+      #
+      # 只有真的有資料異動才 commit
+      # =======================================================
       - name: Commit and push data
+        if: steps.existing.outputs.valid != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add data/
 
-          git diff --staged --quiet || \
-            git commit -m "📊 Daily market data $(date -u +%Y-%m-%d)"
+          if git diff --staged --quiet; then
 
-          git push
+            echo "ℹ️ No data changes to commit."
+
+          else
+
+            TARGET="${{ steps.target.outputs.target }}"
+
+            git commit \
+              -m "📊 Market data ${TARGET}"
+
+            git push
+
+          fi
+
+
+      # =======================================================
+      # 9. 最終摘要
+      # =======================================================
+      - name: Workflow summary
+        if: always()
+        run: |
+          echo "## Market Data Workflow" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "- Target: **${{ steps.target.outputs.target }}**" \
+            >> "$GITHUB_STEP_SUMMARY"
+
+          echo "- Trigger: **${{ github.event_name }}**" \
+            >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ steps.existing.outputs.valid }}" = "true" ]; then
+
+            echo "- Result: ✅ Existing valid data — skipped" \
+              >> "$GITHUB_STEP_SUMMARY"
+
+          else
+
+            echo "- Result: Fetch attempted" \
+              >> "$GITHUB_STEP_SUMMARY"
+
+          fi
