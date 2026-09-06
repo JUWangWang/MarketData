@@ -998,11 +998,55 @@ if __name__ == "__main__":
         f"\n✅ 已寫入 {out_path}"
     )
 
-    # ── latest.json ───────────────────────────────────
-    latest_path = (
-        DATA_DIR
-        / "latest.json"
-    )
+# ── latest.json ───────────────────────────────────
+latest_path = DATA_DIR / "latest.json"
+
+should_update_latest = True
+existing_latest_date = None
+
+# 如果 latest.json 已存在，
+# 先確認這次 TARGET 是否比目前 latest 新或相同
+if latest_path.exists():
+
+    try:
+        with open(
+            latest_path,
+            "r",
+            encoding="utf-8"
+        ) as f:
+            existing_latest = json.load(f)
+
+        existing_latest_date = existing_latest.get(
+            "target_date"
+        )
+
+        if existing_latest_date:
+
+            current_target_date = datetime.strptime(
+                TARGET,
+                "%Y-%m-%d"
+            ).date()
+
+            old_latest_date = datetime.strptime(
+                existing_latest_date,
+                "%Y-%m-%d"
+            ).date()
+
+            # 歷史補抓不可讓 latest.json 往回退
+            if current_target_date < old_latest_date:
+                should_update_latest = False
+
+    except Exception as e:
+        print(
+            f"⚠️ 讀取 existing latest.json 失敗：{e}"
+        )
+
+        # 若舊 latest 本身讀不到，
+        # 允許用本次完整有效資料修復
+        should_update_latest = True
+
+
+if should_update_latest:
 
     with open(
         latest_path,
@@ -1020,6 +1064,14 @@ if __name__ == "__main__":
 
     print(
         f"✅ 已更新 {latest_path}"
+    )
+
+else:
+
+    print(
+        f"ℹ️ 本次為歷史補抓 TARGET={TARGET}，"
+        f"目前 latest={existing_latest_date}，"
+        "因此不更新 latest.json"
     )
 
     # ── 摘要 ──────────────────────────────────────────
