@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-04T01:13:14.488723Z",
+  "generated_at": "2026-09-06T10:47:21.438458Z",
   "target_date": "2026-09-03",
   "vix": {
     "value": 14.32,
@@ -9,10 +9,10 @@
     "date": "2026-09-03"
   },
   "move": {
-    "value": 74.6812,
+    "value": 74.68,
     "prev": 79.71,
-    "chg_abs": -5.028801,
-    "chg_pct": -6.3089,
+    "chg_abs": -5.029999,
+    "chg_pct": -6.3104,
     "date": "2026-09-03"
   },
   "y2": {
@@ -38,58 +38,58 @@
   },
   "spread": 43.0,
   "sox": {
-    "value": 11352.1289,
+    "value": 11352.1299,
     "prev": 11339.25,
-    "chg_abs": 12.878906,
+    "chg_abs": 12.879883,
     "chg_pct": 0.1136,
     "date": "2026-09-03"
   },
   "stocks": {
     "NVDA": {
-      "value": NaN,
+      "value": 228.45,
       "prev": 224.41,
-      "chg_abs": NaN,
-      "chg_pct": NaN,
+      "chg_abs": 4.039993,
+      "chg_pct": 1.8003,
       "date": "2026-09-03",
       "name": "輝達",
       "emoji": "🟢",
       "grade": "IG1"
     },
     "TSM": {
-      "value": NaN,
+      "value": 417.01,
       "prev": 415.5,
-      "chg_abs": NaN,
-      "chg_pct": NaN,
+      "chg_abs": 1.51001,
+      "chg_pct": 0.3634,
       "date": "2026-09-03",
       "name": "台積電",
       "emoji": "🔵",
       "grade": "IG1"
     },
     "SMCI": {
-      "value": NaN,
+      "value": 37.87,
       "prev": 37.0,
-      "chg_abs": NaN,
-      "chg_pct": NaN,
+      "chg_abs": 0.869999,
+      "chg_pct": 2.3513,
       "date": "2026-09-03",
       "name": "超微電腦",
       "emoji": "⚡",
       "grade": "HY1"
     },
     "ARM": {
-      "value": NaN,
+      "value": 242.59,
       "prev": 234.86,
-      "chg_abs": NaN,
-      "chg_pct": NaN,
+      "chg_abs": 7.729996,
+      "chg_pct": 3.2913,
       "date": "2026-09-03",
       "name": "安謀控股",
       "emoji": "💻",
       "grade": "IG1"
     },
     "TSLA": {
-      "value": NaN,
+      "value": 376.37,
       "prev": 357.01,
-      "chg_abs": NaN,
-      "chg_pct": NaN,
+      "chg_abs": 19.359985,
+      "chg_pct": 5.4228,
       "date": "2026-09-03",
       "name": "特斯拉",
       "emoji": "🚗",
