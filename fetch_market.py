@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """
-金融市場每日監控指標 — 資料抓取腳本
+Market data fetcher for GitHub Actions.
 
-資料來源順序
-1. Yahoo Finance Daily Chart API
-2. Yahoo Finance Intraday 5m Chart API
-3. yfinance Ticker.history
-4. yf.download
-5. Treasury.gov：2Y / 10Y / 30Y
+Rules:
+- Every item must match TARGET exactly.
+- Reject None / NaN / inf.
+- Do not write JSON unless all required items pass validation.
+- Historical backfill must not rewind latest.json.
 
-資料安全原則
-- 每筆資料 date 必須 == TARGET
-- value 必須為有限數字
-- 驗證失敗不寫 JSON
-- JSON 禁止 NaN / inf
-- 歷史補抓不得讓 latest.json 倒退
+Fetch order for Yahoo symbols:
+1) Yahoo daily chart API
+2) Yahoo intraday 5m chart API
+3) yfinance Ticker.history
+4) yf.download
+
+Treasury yields:
+- Treasury.gov official XML
 """
 
 import json
@@ -36,10 +37,10 @@ import yfinance as yf
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-YAHOO_HOSTS = [
+YAHOO_HOSTS = (
     "query2.finance.yahoo.com",
     "query1.finance.yahoo.com",
-]
+)
 
 HEADERS = {
     "User-Agent": (
@@ -51,10 +52,14 @@ HEADERS = {
     "Referer": "https://finance.yahoo.com/",
 }
 
+STOCKS_META = {
+    "NVDA": {"name": "輝達", "emoji": "🟢", "grade": "IG1"},
+    "TSM": {"name": "台積電", "emoji": "🔵", "grade": "IG1"},
+    "SMCI": {"name": "超微電腦", "emoji": "⚡", "grade": "HY1"},
+    "ARM": {"name": "安謀控股", "emoji": "💻", "grade": "IG1"},
+    "TSLA": {"name": "特斯拉", "emoji": "🚗", "grade": "IG3"},
+}
 
-# ============================================================
-# TARGET DATE
-# ============================================================
 
 def get_target_date():
     if len(sys.argv) > 1:
@@ -63,7 +68,6 @@ def get_target_date():
         return target
 
     now_tw = datetime.now(ZoneInfo("Asia/Taipei"))
-
     nyse = mcal.get_calendar("NYSE")
 
     schedule = nyse.schedule(
@@ -74,68 +78,31 @@ def get_target_date():
     if schedule.empty:
         raise RuntimeError("找不到最近的 NYSE 交易日")
 
-    return (
-        schedule.index[-1]
-        .date()
-        .strftime("%Y-%m-%d")
-    )
+    return schedule.index[-1].date().strftime("%Y-%m-%d")
 
 
 TARGET = get_target_date()
 
-print(
-    "🕒 Taiwan time:",
-    datetime.now(
-        ZoneInfo("Asia/Taipei")
-    ).isoformat(),
-)
-
-print(
-    "🗓 Target market date:",
-    TARGET,
-)
-
-
-# ============================================================
-# BASIC HELPERS
-# ============================================================
 
 def is_valid_number(value):
     if value is None:
         return False
 
     try:
-        value = float(value)
-
-    except (
-        TypeError,
-        ValueError,
-    ):
+        return math.isfinite(float(value))
+    except (TypeError, ValueError):
         return False
 
-    return math.isfinite(value)
 
-
-def make_entry(
-    curr_val,
-    prev_val,
-    curr_date,
-    source=None,
-):
-    if not is_valid_number(
-        curr_val
-    ):
+def make_entry(curr_val, prev_val, curr_date, source):
+    if not is_valid_number(curr_val):
         return None
 
-    curr_val = float(
-        curr_val
-    )
+    curr_val = float(curr_val)
 
     prev_val = (
         float(prev_val)
-        if is_valid_number(
-            prev_val
-        )
+        if is_valid_number(prev_val)
         else None
     )
 
@@ -143,105 +110,47 @@ def make_entry(
     chg_pct = None
 
     if prev_val is not None:
-
-        chg_abs = round(
-            curr_val - prev_val,
-            6,
-        )
+        chg_abs = round(curr_val - prev_val, 6)
 
         if prev_val != 0:
-
             chg_pct = round(
-                (
-                    curr_val
-                    - prev_val
-                )
+                (curr_val - prev_val)
                 / prev_val
                 * 100,
                 4,
             )
 
-    result = {
-        "value": round(
-            curr_val,
-            4,
-        ),
+    return {
+        "value": round(curr_val, 4),
         "prev": (
-            round(
-                prev_val,
-                4,
-            )
+            round(prev_val, 4)
             if prev_val is not None
             else None
         ),
         "chg_abs": chg_abs,
         "chg_pct": chg_pct,
         "date": curr_date,
+        "source": source,
     }
 
-    if source:
-        result["source"] = source
 
-    return result
+def market_date_from_timestamp(timestamp, timezone_name):
+    tz = ZoneInfo(timezone_name or "UTC")
 
-
-def unix_to_market_date(
-    timestamp,
-    timezone_name=None,
-):
-    if timezone_name:
-
-        try:
-
-            return (
-                datetime.fromtimestamp(
-                    timestamp,
-                    ZoneInfo(
-                        timezone_name
-                    ),
-                )
-                .strftime(
-                    "%Y-%m-%d"
-                )
-            )
-
-        except Exception:
-            pass
-
-    return (
-        datetime.fromtimestamp(
-            timestamp,
-            ZoneInfo("UTC"),
-        )
-        .strftime(
-            "%Y-%m-%d"
-        )
-    )
+    return datetime.fromtimestamp(
+        timestamp,
+        tz,
+    ).strftime("%Y-%m-%d")
 
 
-# ============================================================
-# YAHOO COMMON REQUEST
-# ============================================================
-
-def yahoo_chart_request(
-    symbol,
-    params,
-):
-    encoded_symbol = quote(
-        symbol,
-        safe="",
-    )
-
-    last_error = None
+def yahoo_chart_request(symbol, params):
+    encoded = quote(symbol, safe="")
 
     for host in YAHOO_HOSTS:
-
         try:
-
             url = (
                 f"https://{host}"
-                f"/v8/finance/chart/"
-                f"{encoded_symbol}"
+                f"/v8/finance/chart/{encoded}"
             )
 
             response = requests.get(
@@ -253,26 +162,20 @@ def yahoo_chart_request(
 
             response.raise_for_status()
 
-            payload = (
-                response.json()
-            )
+            payload = response.json()
 
             chart = payload.get(
                 "chart",
                 {},
             )
 
-            if chart.get(
-                "error"
-            ):
+            if chart.get("error"):
                 raise RuntimeError(
-                    chart["error"]
+                    str(chart["error"])
                 )
 
             results = (
-                chart.get(
-                    "result"
-                )
+                chart.get("result")
                 or []
             )
 
@@ -287,22 +190,10 @@ def yahoo_chart_request(
             )
 
         except Exception as exc:
-
-            last_error = exc
-
             print(
-                f"  ⚠ {symbol} "
-                f"{host}: "
-                f"{type(exc).__name__}: "
-                f"{exc}"
+                f"  ⚠ {symbol} {host}: "
+                f"{type(exc).__name__}: {exc}"
             )
-
-    if last_error:
-
-        print(
-            f"  ❌ {symbol}: "
-            "Yahoo chart 全部失敗"
-        )
 
     return (
         None,
@@ -310,107 +201,64 @@ def yahoo_chart_request(
     )
 
 
-# ============================================================
-# YAHOO DAILY
-# ============================================================
-
-def yahoo_daily_get(
-    symbol,
-    target_date_str,
-):
-    params = {
-        "interval": "1d",
-        "range": "1mo",
-        "includePrePost": "false",
-        "events": "div,splits",
-    }
-
-    result, host = (
-        yahoo_chart_request(
-            symbol,
-            params,
-        )
+def yahoo_daily_get(symbol, target_date):
+    result, host = yahoo_chart_request(
+        symbol,
+        {
+            "interval": "1d",
+            "range": "1mo",
+            "includePrePost": "false",
+            "events": "div,splits",
+        },
     )
 
     if result is None:
         return None
 
     timestamps = (
-        result.get(
-            "timestamp"
-        )
+        result.get("timestamp")
         or []
     )
 
-    quote_list = (
-        result.get(
-            "indicators",
-            {},
-        )
-        .get(
-            "quote"
-        )
+    quotes = (
+        result
+        .get("indicators", {})
+        .get("quote")
         or []
     )
 
-    if (
-        not timestamps
-        or not quote_list
-    ):
-
-        print(
-            f"  ⚠ {symbol}: "
-            "Yahoo daily "
-            "timestamp/quote empty"
-        )
-
+    if not timestamps or not quotes:
         return None
 
     closes = (
-        quote_list[0]
-        .get(
-            "close"
-        )
+        quotes[0]
+        .get("close")
         or []
     )
 
-    timezone_name = (
-        result.get(
-            "meta",
-            {},
-        )
-        .get(
-            "exchangeTimezoneName"
-        )
+    tz_name = (
+        result
+        .get("meta", {})
+        .get("exchangeTimezoneName")
     )
 
     rows = []
 
-    for (
-        timestamp,
-        close,
-    ) in zip(
+    for ts, close in zip(
         timestamps,
         closes,
     ):
-
-        if not is_valid_number(
-            close
-        ):
+        if not is_valid_number(close):
             continue
 
         trade_date = (
-            unix_to_market_date(
-                timestamp,
-                timezone_name,
+            market_date_from_timestamp(
+                ts,
+                tz_name,
             )
         )
 
-        if (
-            trade_date
-            <= target_date_str
-        ):
-
+        if trade_date <= target_date:
             rows.append(
                 (
                     trade_date,
@@ -419,12 +267,6 @@ def yahoo_daily_get(
             )
 
     if not rows:
-
-        print(
-            f"  ⚠ {symbol}: "
-            "Yahoo daily 無可用資料"
-        )
-
         return None
 
     rows.sort(
@@ -432,9 +274,7 @@ def yahoo_daily_get(
         reverse=True,
     )
 
-    curr_date, curr_val = (
-        rows[0]
-    )
+    curr_date, curr_val = rows[0]
 
     prev_val = (
         rows[1][1]
@@ -442,18 +282,11 @@ def yahoo_daily_get(
         else None
     )
 
-    # 日線若仍是舊日期，
-    # 不接受，改走 intraday
-    if (
-        curr_date
-        != target_date_str
-    ):
-
+    if curr_date != target_date:
         print(
-            f"  ⚠ {symbol} "
-            "daily 尚未同步："
+            f"  ⚠ {symbol} daily stale: "
             f"latest={curr_date}, "
-            f"target={target_date_str}"
+            f"target={target_date}"
         )
 
         return None
@@ -462,15 +295,11 @@ def yahoo_daily_get(
         curr_val,
         prev_val,
         curr_date,
-        source=(
-            f"yahoo_daily:"
-            f"{host}"
-        ),
+        f"yahoo_daily:{host}",
     )
 
     print(
-        f"  ✅ {symbol} "
-        "(Yahoo daily): "
+        f"  ✅ {symbol} Yahoo daily: "
         f"{entry['value']} "
         f"({entry['date']})"
     )
@@ -478,96 +307,66 @@ def yahoo_daily_get(
     return entry
 
 
-# ============================================================
-# PREVIOUS CLOSE
-# ============================================================
-
 def yahoo_previous_close(
     symbol,
-    target_date_str,
+    target_date,
 ):
-    params = {
-        "interval": "1d",
-        "range": "1mo",
-        "includePrePost": "false",
-    }
-
-    result, _ = (
-        yahoo_chart_request(
-            symbol,
-            params,
-        )
+    result, _ = yahoo_chart_request(
+        symbol,
+        {
+            "interval": "1d",
+            "range": "1mo",
+            "includePrePost": "false",
+        },
     )
 
     if result is None:
         return None
 
     timestamps = (
-        result.get(
-            "timestamp"
-        )
+        result.get("timestamp")
         or []
     )
 
-    quote_list = (
-        result.get(
-            "indicators",
-            {},
-        )
-        .get(
-            "quote"
-        )
+    quotes = (
+        result
+        .get("indicators", {})
+        .get("quote")
         or []
     )
 
-    if not quote_list:
+    if not quotes:
         return None
 
     closes = (
-        quote_list[0]
-        .get(
-            "close"
-        )
+        quotes[0]
+        .get("close")
         or []
     )
 
-    timezone_name = (
-        result.get(
-            "meta",
-            {},
-        )
-        .get(
-            "exchangeTimezoneName"
-        )
+    tz_name = (
+        result
+        .get("meta", {})
+        .get("exchangeTimezoneName")
     )
 
     rows = []
 
-    for (
-        timestamp,
-        close,
-    ) in zip(
+    for ts, close in zip(
         timestamps,
         closes,
     ):
-
-        if not is_valid_number(
-            close
-        ):
+        if not is_valid_number(close):
             continue
 
         trade_date = (
-            unix_to_market_date(
-                timestamp,
-                timezone_name,
+            market_date_from_timestamp(
+                ts,
+                tz_name,
             )
         )
 
-        if (
-            trade_date
-            < target_date_str
-        ):
-
+        if trade_date < target_date:
             rows.append(
                 (
                     trade_date,
@@ -586,196 +385,125 @@ def yahoo_previous_close(
     return rows[0][1]
 
 
-# ============================================================
-# YAHOO INTRADAY 5M
-# ============================================================
-
 def yahoo_intraday_get(
     symbol,
-    target_date_str,
+    target_date,
 ):
-    target_date = (
-        datetime.strptime(
-            target_date_str,
-            "%Y-%m-%d",
-        )
-        .date()
-    )
+    target = datetime.strptime(
+        target_date,
+        "%Y-%m-%d",
+    ).date()
 
     ny_tz = ZoneInfo(
         "America/New_York"
     )
 
-    start_dt = (
-        datetime.combine(
-            target_date,
-            dt_time(
-                0,
-                0,
-            ),
-            tzinfo=ny_tz,
-        )
+    start_dt = datetime.combine(
+        target,
+        dt_time(0, 0),
+        tzinfo=ny_tz,
     )
 
     end_dt = (
         start_dt
-        + timedelta(
-            days=1
-        )
+        + timedelta(days=1)
     )
 
-    params = {
-        "period1": int(
-            start_dt.timestamp()
-        ),
-        "period2": int(
-            end_dt.timestamp()
-        ),
-        "interval": "5m",
-        "includePrePost": "false",
-        "events": "div,splits",
-    }
-
-    result, host = (
-        yahoo_chart_request(
-            symbol,
-            params,
-        )
+    result, host = yahoo_chart_request(
+        symbol,
+        {
+            "period1": int(
+                start_dt.timestamp()
+            ),
+            "period2": int(
+                end_dt.timestamp()
+            ),
+            "interval": "5m",
+            "includePrePost": "false",
+            "events": "div,splits",
+        },
     )
 
     if result is None:
         return None
 
     timestamps = (
-        result.get(
-            "timestamp"
-        )
+        result.get("timestamp")
         or []
     )
 
-    quote_list = (
-        result.get(
-            "indicators",
-            {},
-        )
-        .get(
-            "quote"
-        )
+    quotes = (
+        result
+        .get("indicators", {})
+        .get("quote")
         or []
     )
 
-    if (
-        not timestamps
-        or not quote_list
-    ):
-
-        print(
-            f"  ⚠ {symbol}: "
-            "Yahoo intraday "
-            "timestamp/quote empty"
-        )
-
+    if not timestamps or not quotes:
         return None
 
     closes = (
-        quote_list[0]
-        .get(
-            "close"
-        )
+        quotes[0]
+        .get("close")
         or []
     )
 
-    timezone_name = (
-        result.get(
-            "meta",
-            {},
-        )
-        .get(
-            "exchangeTimezoneName"
-        )
+    tz_name = (
+        result
+        .get("meta", {})
+        .get("exchangeTimezoneName")
         or "America/New_York"
     )
 
-    try:
-
-        market_tz = ZoneInfo(
-            timezone_name
-        )
-
-    except Exception:
-
-        market_tz = (
-            ny_tz
-        )
+    market_tz = ZoneInfo(
+        tz_name
+    )
 
     rows = []
 
-    for (
-        timestamp,
-        close,
-    ) in zip(
+    for ts, close in zip(
         timestamps,
         closes,
     ):
-
-        if not is_valid_number(
-            close
-        ):
+        if not is_valid_number(close):
             continue
 
-        dt_local = (
+        local_dt = (
             datetime.fromtimestamp(
-                timestamp,
+                ts,
                 market_tz,
             )
         )
 
-        trade_date = (
-            dt_local.strftime(
-                "%Y-%m-%d"
-            )
-        )
-
         if (
-            trade_date
-            != target_date_str
+            local_dt.strftime("%Y-%m-%d")
+            != target_date
         ):
             continue
 
         local_time = (
-            dt_local.time()
+            local_dt.time()
         )
 
-        # 美國 regular session
-        # 約 09:30 - 16:00 ET
         if (
-            local_time
-            < dt_time(
-                9,
-                30,
-            )
-            or local_time
-            > dt_time(
-                16,
-                5,
-            )
+            local_time < dt_time(9, 30)
+            or
+            local_time > dt_time(16, 5)
         ):
             continue
 
         rows.append(
             (
-                dt_local,
+                local_dt,
                 float(close),
             )
         )
 
     if not rows:
-
         print(
-            f"  ⚠ {symbol}: "
-            "TARGET intraday 無資料"
+            f"  ⚠ {symbol} "
+            "intraday TARGET 無資料"
         )
-
         return None
 
     rows.sort(
@@ -789,26 +517,19 @@ def yahoo_intraday_get(
     prev_val = (
         yahoo_previous_close(
             symbol,
-            target_date_str,
+            target_date,
         )
     )
 
     entry = make_entry(
         curr_val,
         prev_val,
-        target_date_str,
-        source=(
-            f"yahoo_intraday_5m:"
-            f"{host}"
-        ),
+        target_date,
+        f"yahoo_intraday_5m:{host}",
     )
 
-    if entry is None:
-        return None
-
     print(
-        f"  ✅ {symbol} "
-        "(Yahoo intraday 5m): "
+        f"  ✅ {symbol} Yahoo intraday: "
         f"{entry['value']} "
         f"({entry['date']}) "
         f"last_bar="
@@ -818,45 +539,30 @@ def yahoo_intraday_get(
     return entry
 
 
-# ============================================================
-# YFINANCE HISTORY
-# ============================================================
-
 def yfinance_history_get(
     symbol,
-    target_date_str,
+    target_date,
 ):
     target_dt = (
         datetime.strptime(
-            target_date_str,
+            target_date,
             "%Y-%m-%d",
         )
     )
 
     start = (
         target_dt
-        - timedelta(
-            days=14
-        )
-    ).strftime(
-        "%Y-%m-%d"
-    )
+        - timedelta(days=14)
+    ).strftime("%Y-%m-%d")
 
     end = (
         target_dt
-        + timedelta(
-            days=2
-        )
-    ).strftime(
-        "%Y-%m-%d"
-    )
+        + timedelta(days=2)
+    ).strftime("%Y-%m-%d")
 
     try:
-
         hist = (
-            yf.Ticker(
-                symbol
-            )
+            yf.Ticker(symbol)
             .history(
                 start=start,
                 end=end,
@@ -866,22 +572,17 @@ def yfinance_history_get(
         )
 
         if hist.empty:
-
-            raise ValueError(
-                "empty"
-            )
+            raise ValueError("empty")
 
         hist.index = (
             hist.index
-            .strftime(
-                "%Y-%m-%d"
-            )
+            .strftime("%Y-%m-%d")
         )
 
         valid = (
             hist[
                 hist.index
-                <= target_date_str
+                <= target_date
             ]
             .sort_index(
                 ascending=False
@@ -889,7 +590,6 @@ def yfinance_history_get(
         )
 
         if valid.empty:
-
             raise ValueError(
                 "no valid rows"
             )
@@ -898,26 +598,17 @@ def yfinance_history_get(
             valid.index[0]
         )
 
-        if (
-            curr_date
-            != target_date_str
-        ):
-
+        if curr_date != target_date:
             raise ValueError(
-                f"stale date "
-                f"{curr_date}"
+                f"stale date {curr_date}"
             )
 
         curr_val = (
-            valid.iloc[0][
-                "Close"
-            ]
+            valid.iloc[0]["Close"]
         )
 
         prev_val = (
-            valid.iloc[1][
-                "Close"
-            ]
+            valid.iloc[1]["Close"]
             if len(valid) > 1
             else None
         )
@@ -926,20 +617,17 @@ def yfinance_history_get(
             curr_val,
             prev_val,
             curr_date,
-            source=(
-                "yfinance_history"
-            ),
+            "yfinance_history",
         )
 
         if entry is None:
-
             raise ValueError(
                 "invalid current value"
             )
 
         print(
             f"  ✅ {symbol} "
-            "(yfinance history): "
+            "yfinance history: "
             f"{entry['value']} "
             f"({entry['date']})"
         )
@@ -947,7 +635,6 @@ def yfinance_history_get(
         return entry
 
     except Exception as exc:
-
         print(
             f"  ⚠ {symbol} "
             "yfinance history: "
@@ -958,41 +645,28 @@ def yfinance_history_get(
         return None
 
 
-# ============================================================
-# YF.DOWNLOAD
-# ============================================================
-
 def yf_download_get(
     symbol,
-    target_date_str,
+    target_date,
 ):
     target_dt = (
         datetime.strptime(
-            target_date_str,
+            target_date,
             "%Y-%m-%d",
         )
     )
 
     start = (
         target_dt
-        - timedelta(
-            days=14
-        )
-    ).strftime(
-        "%Y-%m-%d"
-    )
+        - timedelta(days=14)
+    ).strftime("%Y-%m-%d")
 
     end = (
         target_dt
-        + timedelta(
-            days=2
-        )
-    ).strftime(
-        "%Y-%m-%d"
-    )
+        + timedelta(days=2)
+    ).strftime("%Y-%m-%d")
 
     try:
-
         hist = yf.download(
             symbol,
             start=start,
@@ -1004,34 +678,26 @@ def yf_download_get(
         )
 
         if hist.empty:
-
-            raise ValueError(
-                "empty"
-            )
+            raise ValueError("empty")
 
         if isinstance(
             hist.columns,
             pd.MultiIndex,
         ):
-
             hist.columns = (
                 hist.columns
-                .get_level_values(
-                    0
-                )
+                .get_level_values(0)
             )
 
         hist.index = (
             hist.index
-            .strftime(
-                "%Y-%m-%d"
-            )
+            .strftime("%Y-%m-%d")
         )
 
         valid = (
             hist[
                 hist.index
-                <= target_date_str
+                <= target_date
             ]
             .sort_index(
                 ascending=False
@@ -1039,7 +705,6 @@ def yf_download_get(
         )
 
         if valid.empty:
-
             raise ValueError(
                 "no valid rows"
             )
@@ -1048,26 +713,17 @@ def yf_download_get(
             valid.index[0]
         )
 
-        if (
-            curr_date
-            != target_date_str
-        ):
-
+        if curr_date != target_date:
             raise ValueError(
-                f"stale date "
-                f"{curr_date}"
+                f"stale date {curr_date}"
             )
 
         curr_val = (
-            valid.iloc[0][
-                "Close"
-            ]
+            valid.iloc[0]["Close"]
         )
 
         prev_val = (
-            valid.iloc[1][
-                "Close"
-            ]
+            valid.iloc[1]["Close"]
             if len(valid) > 1
             else None
         )
@@ -1076,20 +732,17 @@ def yf_download_get(
             curr_val,
             prev_val,
             curr_date,
-            source=(
-                "yf_download"
-            ),
+            "yf_download",
         )
 
         if entry is None:
-
             raise ValueError(
                 "invalid current value"
             )
 
         print(
             f"  ✅ {symbol} "
-            "(yf.download): "
+            "yf.download: "
             f"{entry['value']} "
             f"({entry['date']})"
         )
@@ -1097,7 +750,6 @@ def yf_download_get(
         return entry
 
     except Exception as exc:
-
         print(
             f"  ❌ {symbol} "
             "yf.download: "
@@ -1108,105 +760,85 @@ def yf_download_get(
         return None
 
 
-# ============================================================
-# MARKET GET
-# ============================================================
-
 def market_get(
     symbol,
-    target_date_str,
+    target_date,
 ):
-    # 1. Yahoo daily
     result = (
         yahoo_daily_get(
             symbol,
-            target_date_str,
+            target_date,
         )
     )
 
     if result:
         return result
 
-    # 2. Yahoo intraday 5m
     print(
         f"  ↪ {symbol}: "
-        "改抓 Yahoo intraday 5m..."
+        "fallback → Yahoo intraday 5m"
     )
 
     result = (
         yahoo_intraday_get(
             symbol,
-            target_date_str,
+            target_date,
         )
     )
 
     if result:
         return result
 
-    # 3. yfinance history
     print(
         f"  ↪ {symbol}: "
-        "改抓 yfinance history..."
+        "fallback → yfinance history"
     )
 
     result = (
         yfinance_history_get(
             symbol,
-            target_date_str,
+            target_date,
         )
     )
 
     if result:
         return result
 
-    # 4. yf.download
     print(
         f"  ↪ {symbol}: "
-        "改抓 yf.download..."
+        "fallback → yf.download"
     )
 
-    return (
-        yf_download_get(
-            symbol,
-            target_date_str,
-        )
+    return yf_download_get(
+        symbol,
+        target_date,
     )
 
-
-# ============================================================
-# TREASURY
-# ============================================================
 
 def treasury_get(
-    target_date_str,
+    target_date,
 ):
     target_dt = (
         datetime.strptime(
-            target_date_str,
+            target_date,
             "%Y-%m-%d",
         )
     )
 
     months = {
-        target_dt.strftime(
-            "%Y%m"
-        ),
+        target_dt.strftime("%Y%m"),
         (
             target_dt
-            - timedelta(
-                days=31
-            )
-        ).strftime(
-            "%Y%m"
-        ),
+            - timedelta(days=31)
+        ).strftime("%Y%m"),
     }
 
-    D = (
+    d_ns = (
         "http://schemas.microsoft.com/"
         "ado/2007/08/dataservices"
     )
 
-    M = (
+    m_ns = (
         "http://schemas.microsoft.com/"
         "ado/2007/08/dataservices/metadata"
     )
@@ -1217,7 +849,6 @@ def treasury_get(
         months,
         reverse=True,
     ):
-
         url = (
             "https://home.treasury.gov/"
             "resource-center/"
@@ -1228,108 +859,91 @@ def treasury_get(
         )
 
         try:
-
             response = requests.get(
                 url,
-                timeout=20,
                 headers=HEADERS,
+                timeout=20,
             )
 
             response.raise_for_status()
 
-            root = (
-                ET.fromstring(
-                    response.content
-                )
+            root = ET.fromstring(
+                response.content
             )
 
             count = 0
 
             for props in root.iter(
-                f"{{{M}}}properties"
+                f"{{{m_ns}}}properties"
             ):
-
                 date_el = props.find(
-                    f"{{{D}}}NEW_DATE"
+                    f"{{{d_ns}}}NEW_DATE"
                 )
 
                 y2_el = props.find(
-                    f"{{{D}}}BC_2YEAR"
+                    f"{{{d_ns}}}BC_2YEAR"
                 )
 
                 y10_el = props.find(
-                    f"{{{D}}}BC_10YEAR"
+                    f"{{{d_ns}}}BC_10YEAR"
                 )
 
                 y30_el = props.find(
-                    f"{{{D}}}BC_30YEAR"
+                    f"{{{d_ns}}}BC_30YEAR"
                 )
 
                 if (
                     date_el is None
-                    or not date_el.text
+                    or
+                    not date_el.text
                 ):
                     continue
 
                 trade_date = (
-                    date_el.text[
-                        :10
-                    ]
+                    date_el.text[:10]
                 )
 
                 if (
                     trade_date
-                    > target_date_str
+                    > target_date
                 ):
                     continue
 
                 y2 = (
-                    float(
-                        y2_el.text
-                    )
+                    float(y2_el.text)
                     if (
-                        y2_el
-                        is not None
+                        y2_el is not None
                         and y2_el.text
                     )
                     else None
                 )
 
                 y10 = (
-                    float(
-                        y10_el.text
-                    )
+                    float(y10_el.text)
                     if (
-                        y10_el
-                        is not None
+                        y10_el is not None
                         and y10_el.text
                     )
                     else None
                 )
 
                 y30 = (
-                    float(
-                        y30_el.text
-                    )
+                    float(y30_el.text)
                     if (
-                        y30_el
-                        is not None
+                        y30_el is not None
                         and y30_el.text
                     )
                     else None
                 )
 
                 if all(
-                    is_valid_number(
-                        x
-                    )
-                    for x in (
+                    is_valid_number(v)
+                    for v in (
                         y2,
                         y10,
                         y30,
                     )
                 ):
-
                     rows.append(
                         (
                             trade_date,
@@ -1343,12 +957,10 @@ def treasury_get(
 
             print(
                 f"  📥 Treasury.gov "
-                f"{ym}: "
-                f"{count} 筆"
+                f"{ym}: {count} 筆"
             )
 
         except Exception as exc:
-
             print(
                 f"  ❌ Treasury.gov "
                 f"{ym}: "
@@ -1357,7 +969,6 @@ def treasury_get(
             )
 
     if not rows:
-
         return (
             None,
             None,
@@ -1377,18 +988,7 @@ def treasury_get(
         else None
     )
 
-    print(
-        f"  ✅ Treasury "
-        f"curr={curr[0]} "
-        f"2Y={curr[1]} "
-        f"10Y={curr[2]} "
-        f"30Y={curr[3]}"
-    )
-
-    def build(
-        idx,
-    ):
-
+    def build(idx):
         return make_entry(
             curr[idx],
             (
@@ -1397,7 +997,7 @@ def treasury_get(
                 else None
             ),
             curr[0],
-            source="treasury_gov",
+            "treasury_gov",
         )
 
     return (
@@ -1407,54 +1007,38 @@ def treasury_get(
     )
 
 
-# ============================================================
-# FETCH ALL
-# ============================================================
-
 def fetch_all(
-    target,
+    target_date,
 ):
     data = {
         "generated_at": (
             datetime.now(
                 ZoneInfo("UTC")
-            )
-            .isoformat()
+            ).isoformat()
         ),
-        "target_date": target,
+        "target_date": target_date,
     }
 
-    print(
-        "\n📡 VIX..."
+    print("\n📡 VIX")
+    data["vix"] = market_get(
+        "^VIX",
+        target_date,
     )
 
-    data["vix"] = (
-        market_get(
-            "^VIX",
-            target,
-        )
-    )
-
-    print(
-        "\n📡 MOVE..."
-    )
-
-    data["move"] = (
-        market_get(
-            "^MOVE",
-            target,
-        )
+    print("\n📡 MOVE")
+    data["move"] = market_get(
+        "^MOVE",
+        target_date,
     )
 
     print(
-        "\n📡 "
-        "2Y/10Y/30Y "
-        "公債（Treasury.gov）..."
+        "\n📡 Treasury "
+        "2Y / 10Y / 30Y"
     )
 
     y2, y10, y30 = (
         treasury_get(
-            target
+            target_date
         )
     )
 
@@ -1462,497 +1046,7 @@ def fetch_all(
     data["y10"] = y10
     data["y30"] = y30
 
-    if (
-        y10
-        and y2
-    ):
-
-        data["spread"] = round(
+    data["spread"] = (
+        round(
             (
-                y10["value"]
-                - y2["value"]
-            )
-            * 100,
-            2,
-        )
-
-    else:
-
-        data["spread"] = None
-
-    print(
-        "\n📡 SOX..."
-    )
-
-    data["sox"] = (
-        market_get(
-            "^SOX",
-            target,
-        )
-    )
-
-    stocks_meta = {
-        "NVDA": {
-            "name": "輝達",
-            "emoji": "🟢",
-            "grade": "IG1",
-        },
-        "TSM": {
-            "name": "台積電",
-            "emoji": "🔵",
-            "grade": "IG1",
-        },
-        "SMCI": {
-            "name": "超微電腦",
-            "emoji": "⚡",
-            "grade": "HY1",
-        },
-        "ARM": {
-            "name": "安謀控股",
-            "emoji": "💻",
-            "grade": "IG1",
-        },
-        "TSLA": {
-            "name": "特斯拉",
-            "emoji": "🚗",
-            "grade": "IG3",
-        },
-    }
-
-    data["stocks"] = {}
-
-    for (
-        symbol,
-        meta,
-    ) in stocks_meta.items():
-
-        print(
-            f"\n📡 {symbol}..."
-        )
-
-        item = (
-            market_get(
-                symbol,
-                target,
-            )
-        )
-
-        if item:
-            item.update(
-                meta
-            )
-
-        data[
-            "stocks"
-        ][
-            symbol
-        ] = item
-
-        time.sleep(
-            0.5
-        )
-
-    return data
-
-
-# ============================================================
-# VALIDATION
-# ============================================================
-
-def validate_data(
-    data,
-    target,
-):
-    checks = {
-        "VIX": data.get(
-            "vix"
-        ),
-        "MOVE": data.get(
-            "move"
-        ),
-        "SOX": data.get(
-            "sox"
-        ),
-        "2Y": data.get(
-            "y2"
-        ),
-        "10Y": data.get(
-            "y10"
-        ),
-        "30Y": data.get(
-            "y30"
-        ),
-    }
-
-    for (
-        symbol,
-        item,
-    ) in (
-        data.get(
-            "stocks",
-            {},
-        )
-        .items()
-    ):
-
-        checks[
-            symbol
-        ] = item
-
-    failed = []
-
-    print(
-        "\n"
-        "======================================"
-    )
-
-    print(
-        "🔎 資料完整性驗證"
-    )
-
-    print(
-        "======================================"
-    )
-
-    for (
-        name,
-        item,
-    ) in checks.items():
-
-        if item is None:
-
-            failed.append(
-                f"{name}: 無資料"
-            )
-
-            print(
-                f"❌ {name}: 無資料"
-            )
-
-            continue
-
-        actual_date = (
-            item.get(
-                "date"
-            )
-        )
-
-        value = (
-            item.get(
-                "value"
-            )
-        )
-
-        source = (
-            item.get(
-                "source",
-                "-",
-            )
-        )
-
-        if (
-            actual_date
-            != target
-        ):
-
-            failed.append(
-                f"{name}: "
-                f"expected={target}, "
-                f"actual={actual_date}"
-            )
-
-            print(
-                f"❌ {name}: "
-                f"{actual_date} "
-                f"(應為 {target}) "
-                f"[{source}]"
-            )
-
-            continue
-
-        if not is_valid_number(
-            value
-        ):
-
-            failed.append(
-                f"{name}: "
-                f"invalid value={value}"
-            )
-
-            print(
-                f"❌ {name}: "
-                f"value={value} "
-                f"[{source}]"
-            )
-
-            continue
-
-        print(
-            f"✅ {name}: "
-            f"{actual_date}, "
-            f"value={value} "
-            f"[{source}]"
-        )
-
-    if failed:
-
-        print(
-            "\n⚠️ "
-            "市場資料未完整到達 TARGET"
-        )
-
-        print(
-            "本次不寫入任何 JSON。"
-        )
-
-        for msg in failed:
-
-            print(
-                "  -",
-                msg,
-            )
-
-        return False
-
-    print(
-        "\n✅ "
-        "所有市場資料日期與數值均正確"
-    )
-
-    return True
-
-
-# ============================================================
-# WRITE JSON
-# ============================================================
-
-def write_data(
-    data,
-    target,
-):
-    output_path = (
-        DATA_DIR
-        / f"market_{target}.json"
-    )
-
-    with open(
-        output_path,
-        "w",
-        encoding="utf-8",
-    ) as f:
-
-        json.dump(
-            data,
-            f,
-            ensure_ascii=False,
-            indent=2,
-            allow_nan=False,
-        )
-
-    print(
-        f"\n✅ 已寫入 "
-        f"{output_path}"
-    )
-
-    latest_path = (
-        DATA_DIR
-        / "latest.json"
-    )
-
-    should_update = True
-
-    existing_latest_date = None
-
-    if latest_path.exists():
-
-        try:
-
-            with open(
-                latest_path,
-                "r",
-                encoding="utf-8",
-            ) as f:
-
-                existing = (
-                    json.load(
-                        f
-                    )
-                )
-
-            existing_latest_date = (
-                existing.get(
-                    "target_date"
-                )
-            )
-
-            if existing_latest_date:
-
-                current_date = (
-                    datetime.strptime(
-                        target,
-                        "%Y-%m-%d",
-                    )
-                    .date()
-                )
-
-                old_date = (
-                    datetime.strptime(
-                        existing_latest_date,
-                        "%Y-%m-%d",
-                    )
-                    .date()
-                )
-
-                if (
-                    current_date
-                    < old_date
-                ):
-
-                    should_update = (
-                        False
-                    )
-
-        except Exception as exc:
-
-            print(
-                "⚠️ latest.json "
-                "讀取失敗："
-                f"{type(exc).__name__}: "
-                f"{exc}"
-            )
-
-            should_update = True
-
-    if should_update:
-
-        with open(
-            latest_path,
-            "w",
-            encoding="utf-8",
-        ) as f:
-
-            json.dump(
-                data,
-                f,
-                ensure_ascii=False,
-                indent=2,
-                allow_nan=False,
-            )
-
-        print(
-            f"✅ 已更新 "
-            f"{latest_path}"
-        )
-
-    else:
-
-        print(
-            f"ℹ️ 本次 TARGET="
-            f"{target} "
-            f"< latest="
-            f"{existing_latest_date}，"
-            "不更新 latest.json"
-        )
-
-
-# ============================================================
-# SUMMARY
-# ============================================================
-
-def print_summary(
-    data,
-):
-    print(
-        "\n📊 數據摘要"
-    )
-
-    if data.get(
-        "vix"
-    ):
-
-        print(
-            f"  VIX: "
-            f"{data['vix']['value']:.2f}"
-        )
-
-    if (
-        data.get(
-            "spread"
-        )
-        is not None
-    ):
-
-        print(
-            f"  10Y-2Y: "
-            f"{data['spread']} bps"
-        )
-
-    for (
-        symbol,
-        item,
-    ) in (
-        data.get(
-            "stocks",
-            {},
-        )
-        .items()
-    ):
-
-        if not item:
-            continue
-
-        chg_pct = (
-            item.get(
-                "chg_pct"
-            )
-        )
-
-        source = (
-            item.get(
-                "source",
-                "-",
-            )
-        )
-
-        if is_valid_number(
-            chg_pct
-        ):
-
-            print(
-                f"  {symbol}: "
-                f"${item['value']:.2f} "
-                f"({chg_pct:+.2f}%) "
-                f"[{source}]"
-            )
-
-        else:
-
-            print(
-                f"  {symbol}: "
-                f"${item['value']:.2f} "
-                f"[{source}]"
-            )
-
-
-# ============================================================
-# MAIN
-# ============================================================
-
-if __name__ == "__main__":
-
-    data = fetch_all(
-        TARGET
-    )
-
-    if not validate_data(
-        data,
-        TARGET,
-    ):
-
-        print(
-            "\n❌ DATA_NOT_READY"
-        )
-
-        print(
-            "TARGET 資料尚未完整取得，"
-            "本次
+                y10[
