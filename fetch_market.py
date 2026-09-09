@@ -3,80 +3,131 @@
 金融市場每日監控指標 — 資料抓取腳本
 GitHub Actions 每日自動執行
 
-自動執行：
-    抓台灣時間今天以前，最近一個 NYSE 正式交易日
-
-手動補抓：
-    python fetch_market.py 2026-09-03
+設計原則：
+1. 自動執行抓台灣時間今天以前最近一個 NYSE 正式交易日。
+2. 手動補抓可指定 YYYY-MM-DD。
+3. Yahoo chart API 為股票 / 指數主要來源。
+4. yfinance Ticker.history / yf.download 作為 fallback。
+5. 寫檔前嚴格驗證日期與數值。
+6. 禁止 NaN / inf 寫入 JSON。
+7. 歷史補抓不可讓 latest.json 往回退。
 """
 
 import json
 import math
 import sys
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
-import pandas_market_calendars as mcal
-import yfinance as yf
 import pandas as pd
+import pandas_market_calendars as mcal
 import requests
+import yfinance as yf
 
 
-# ── CONFIG ───────────────────────────────────────────────────
+# ============================================================
+# CONFIG
+# ============================================================
+
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
+YAHOO_HOSTS = [
+    "query2.finance.yahoo.com",
+    "query1.finance.yahoo.com",
+]
 
-# ── TARGET DATE ──────────────────────────────────────────────
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 "
+        "(Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 "
+        "(KHTML, like Gecko) "
+        "Chrome/124.0 Safari/537.36"
+    ),
+    "Accept": "application/json,text/plain,*/*",
+    "Referer": "https://finance.yahoo.com/",
+}
+
+
+# ============================================================
+# TARGET DATE
+# ============================================================
+
 def get_target_date():
     """
-    手動執行：
-        python fetch_market.py 2026-09-02
+    手動：
+        python fetch_market.py 2026-09-08
 
-    自動執行：
-        以台灣時間為基準，
-        找今天以前最近一個 NYSE 正式交易日。
+    自動：
+        台灣時間今天以前，
+        最近一個 NYSE 正式交易日。
     """
 
     if len(sys.argv) > 1:
         target = sys.argv[1]
-        datetime.strptime(target, "%Y-%m-%d")
+
+        # 驗證格式
+        datetime.strptime(
+            target,
+            "%Y-%m-%d"
+        )
+
         return target
 
-    now_tw = datetime.now(ZoneInfo("Asia/Taipei"))
+    now_tw = datetime.now(
+        ZoneInfo("Asia/Taipei")
+    )
 
-    nyse = mcal.get_calendar("NYSE")
-
-    start_date = now_tw.date() - timedelta(days=14)
-    end_date = now_tw.date() - timedelta(days=1)
+    nyse = mcal.get_calendar(
+        "NYSE"
+    )
 
     schedule = nyse.schedule(
-        start_date=start_date,
-        end_date=end_date
+        start_date=(
+            now_tw.date()
+            - timedelta(days=14)
+        ),
+        end_date=(
+            now_tw.date()
+            - timedelta(days=1)
+        )
     )
 
     if schedule.empty:
-        raise RuntimeError("找不到最近的 NYSE 交易日")
+        raise RuntimeError(
+            "找不到最近的 NYSE 交易日"
+        )
 
-    last_trading_day = schedule.index[-1].date()
-
-    return last_trading_day.strftime("%Y-%m-%d")
+    return (
+        schedule.index[-1]
+        .date()
+        .strftime("%Y-%m-%d")
+    )
 
 
 TARGET = get_target_date()
 
 print(
-    f"🕒 Taiwan time: "
-    f"{datetime.now(ZoneInfo('Asia/Taipei')).isoformat()}"
+    "🕒 Taiwan time: "
+    + datetime.now(
+        ZoneInfo("Asia/Taipei")
+    ).isoformat()
 )
-print(f"🗓  Target market date: {TARGET}")
+
+print(
+    f"🗓  Target market date: {TARGET}"
+)
 
 
-# ── HELPERS ──────────────────────────────────────────────────
+# ============================================================
+# HELPERS
+# ============================================================
+
 def is_valid_number(value):
     """
-    檢查是否為有效有限數值。
     排除：
     - None
     - NaN
@@ -84,130 +135,803 @@ def is_valid_number(value):
     - -inf
     - 非數字
     """
+
     if value is None:
         return False
 
     try:
         value = float(value)
-    except (TypeError, ValueError):
+
+    except (
+        TypeError,
+        ValueError
+    ):
         return False
 
-    return math.isfinite(value)
+    return math.isfinite(
+        value
+    )
 
 
-def make_entry(curr_val, prev_val, curr_date):
+def make_entry(
+    curr_val,
+    prev_val,
+    curr_date
+):
     """
-    建立統一資料格式。
-    curr_val 若不是有效數值，直接視為無資料。
+    統一輸出格式
     """
 
-    if not is_valid_number(curr_val):
+    if not is_valid_number(
+        curr_val
+    ):
         return None
 
-    curr_val = float(curr_val)
+    curr_val = float(
+        curr_val
+    )
 
-    if not is_valid_number(prev_val):
-        prev_val = None
+    if is_valid_number(
+        prev_val
+    ):
+        prev_val = float(
+            prev_val
+        )
+
     else:
-        prev_val = float(prev_val)
+        prev_val = None
 
-    chg_abs = (
-        round(curr_val - prev_val, 6)
-        if prev_val is not None
-        else None
-    )
+    if prev_val is not None:
 
-    chg_pct = (
-        round((curr_val - prev_val) / prev_val * 100, 4)
-        if prev_val not in (None, 0)
-        else None
-    )
+        chg_abs = round(
+            curr_val - prev_val,
+            6
+        )
+
+    else:
+        chg_abs = None
+
+    if prev_val not in (
+        None,
+        0
+    ):
+
+        chg_pct = round(
+            (
+                curr_val
+                - prev_val
+            )
+            / prev_val
+            * 100,
+            4
+        )
+
+    else:
+        chg_pct = None
 
     return {
-        "value": round(curr_val, 4),
-        "prev": round(prev_val, 4) if prev_val is not None else None,
+        "value": round(
+            curr_val,
+            4
+        ),
+        "prev": (
+            round(
+                prev_val,
+                4
+            )
+            if prev_val
+            is not None
+            else None
+        ),
         "chg_abs": chg_abs,
         "chg_pct": chg_pct,
         "date": curr_date,
     }
 
 
-# ── TREASURY ─────────────────────────────────────────────────
-def treasury_get(target_date_str):
+def unix_to_market_date(
+    timestamp,
+    timezone_name=None
+):
     """
-    從 Treasury.gov 官方 API 抓 2Y / 10Y / 30Y 殖利率
+    Yahoo timestamp
+    轉成交易所當地日期。
+
+    避免單純 UTC 轉換造成
+    日期跨日誤判。
+    """
+
+    if timezone_name:
+
+        try:
+            dt = datetime.fromtimestamp(
+                timestamp,
+                ZoneInfo(
+                    timezone_name
+                )
+            )
+
+            return dt.strftime(
+                "%Y-%m-%d"
+            )
+
+        except Exception:
+            pass
+
+    return (
+        datetime.utcfromtimestamp(
+            timestamp
+        )
+        .strftime(
+            "%Y-%m-%d"
+        )
+    )
+
+
+# ============================================================
+# YAHOO CHART API
+# ============================================================
+
+def yahoo_chart_get(
+    symbol,
+    target_date_str
+):
+    """
+    Yahoo Finance chart API
+
+    第一順位資料來源：
+    - VIX
+    - MOVE
+    - SOX
+    - NVDA
+    - TSM
+    - SMCI
+    - ARM
+    - TSLA
+    """
+
+    encoded_symbol = quote(
+        symbol,
+        safe=""
+    )
+
+    for host in YAHOO_HOSTS:
+
+        try:
+
+            url = (
+                f"https://{host}"
+                f"/v8/finance/chart/"
+                f"{encoded_symbol}"
+            )
+
+            params = {
+                "interval": "1d",
+                "range": "1mo",
+                "includePrePost": "false",
+                "events": "div,splits",
+            }
+
+            response = requests.get(
+                url,
+                params=params,
+                headers=HEADERS,
+                timeout=20
+            )
+
+            response.raise_for_status()
+
+            payload = response.json()
+
+            chart = payload.get(
+                "chart",
+                {}
+            )
+
+            if chart.get(
+                "error"
+            ):
+
+                raise RuntimeError(
+                    chart[
+                        "error"
+                    ]
+                )
+
+            results = (
+                chart.get(
+                    "result"
+                )
+                or []
+            )
+
+            if not results:
+
+                raise ValueError(
+                    "Yahoo chart result empty"
+                )
+
+            result = results[0]
+
+            timestamps = (
+                result.get(
+                    "timestamp"
+                )
+                or []
+            )
+
+            indicators = (
+                result.get(
+                    "indicators",
+                    {}
+                )
+            )
+
+            quote_data = (
+                indicators.get(
+                    "quote"
+                )
+                or []
+            )
+
+            if (
+                not timestamps
+                or not quote_data
+            ):
+
+                raise ValueError(
+                    "Yahoo chart timestamp/quote empty"
+                )
+
+            closes = (
+                quote_data[0]
+                .get(
+                    "close"
+                )
+                or []
+            )
+
+            timezone_name = (
+                result
+                .get(
+                    "meta",
+                    {}
+                )
+                .get(
+                    "exchangeTimezoneName"
+                )
+            )
+
+            rows = []
+
+            for (
+                timestamp,
+                close
+            ) in zip(
+                timestamps,
+                closes
+            ):
+
+                if not is_valid_number(
+                    close
+                ):
+                    continue
+
+                trade_date = (
+                    unix_to_market_date(
+                        timestamp,
+                        timezone_name
+                    )
+                )
+
+                if (
+                    trade_date
+                    <= target_date_str
+                ):
+
+                    rows.append(
+                        (
+                            trade_date,
+                            float(close)
+                        )
+                    )
+
+            if not rows:
+
+                raise ValueError(
+                    "no valid rows "
+                    f"<= {target_date_str}"
+                )
+
+            rows.sort(
+                key=lambda x: x[0],
+                reverse=True
+            )
+
+            curr_date = (
+                rows[0][0]
+            )
+
+            curr_val = (
+                rows[0][1]
+            )
+
+            prev_val = (
+                rows[1][1]
+                if len(rows) > 1
+                else None
+            )
+
+            entry = make_entry(
+                curr_val,
+                prev_val,
+                curr_date
+            )
+
+            if entry is None:
+
+                raise ValueError(
+                    "invalid current value"
+                )
+
+            print(
+                f"  ✅ {symbol} "
+                f"(Yahoo chart {host}): "
+                f"{entry['value']} "
+                f"({entry['date']})"
+            )
+
+            return entry
+
+        except Exception as e:
+
+            print(
+                f"  ⚠ {symbol} "
+                f"Yahoo chart {host}: "
+                f"{type(e).__name__}: "
+                f"{e}"
+            )
+
+    return None
+
+
+# ============================================================
+# YFINANCE FALLBACK
+# ============================================================
+
+def yfinance_fallback_get(
+    symbol,
+    target_date_str
+):
+    """
+    fallback 1:
+        Ticker.history
+
+    fallback 2:
+        yf.download
+    """
+
+    d = datetime.strptime(
+        target_date_str,
+        "%Y-%m-%d"
+    )
+
+    start = (
+        d
+        - timedelta(days=14)
+    ).strftime(
+        "%Y-%m-%d"
+    )
+
+    end = (
+        d
+        + timedelta(days=2)
+    ).strftime(
+        "%Y-%m-%d"
+    )
+
+    # --------------------------------------------------------
+    # fallback 1:
+    # Ticker.history
+    # --------------------------------------------------------
+
+    try:
+
+        ticker = yf.Ticker(
+            symbol
+        )
+
+        hist = ticker.history(
+            start=start,
+            end=end,
+            interval="1d",
+            auto_adjust=True
+        )
+
+        if hist.empty:
+            raise ValueError(
+                "empty"
+            )
+
+        hist.index = (
+            hist.index
+            .strftime(
+                "%Y-%m-%d"
+            )
+        )
+
+        valid = (
+            hist[
+                hist.index
+                <= target_date_str
+            ]
+            .sort_index(
+                ascending=False
+            )
+        )
+
+        if valid.empty:
+
+            raise ValueError(
+                "no valid rows"
+            )
+
+        curr_date = (
+            valid.index[0]
+        )
+
+        curr_val = (
+            valid.iloc[0][
+                "Close"
+            ]
+        )
+
+        prev_val = (
+            valid.iloc[1][
+                "Close"
+            ]
+            if len(valid) > 1
+            else None
+        )
+
+        entry = make_entry(
+            curr_val,
+            prev_val,
+            curr_date
+        )
+
+        if entry is None:
+
+            raise ValueError(
+                "invalid current value: "
+                f"{curr_val}"
+            )
+
+        print(
+            f"  ✅ {symbol} "
+            "(yfinance history): "
+            f"{entry['value']} "
+            f"({entry['date']})"
+        )
+
+        return entry
+
+    except Exception as e:
+
+        print(
+            f"  ⚠ {symbol} "
+            "yfinance history: "
+            f"{type(e).__name__}: "
+            f"{e}"
+        )
+
+    # --------------------------------------------------------
+    # fallback 2:
+    # yf.download
+    # --------------------------------------------------------
+
+    try:
+
+        hist = yf.download(
+            symbol,
+            start=start,
+            end=end,
+            interval="1d",
+            auto_adjust=True,
+            progress=False
+        )
+
+        if hist.empty:
+
+            raise ValueError(
+                "empty"
+            )
+
+        if isinstance(
+            hist.columns,
+            pd.MultiIndex
+        ):
+
+            hist.columns = (
+                hist.columns
+                .get_level_values(0)
+            )
+
+        hist.index = (
+            hist.index
+            .strftime(
+                "%Y-%m-%d"
+            )
+        )
+
+        valid = (
+            hist[
+                hist.index
+                <= target_date_str
+            ]
+            .sort_index(
+                ascending=False
+            )
+        )
+
+        if valid.empty:
+
+            raise ValueError(
+                "no valid rows"
+            )
+
+        curr_date = (
+            valid.index[0]
+        )
+
+        curr_val = (
+            valid.iloc[0][
+                "Close"
+            ]
+        )
+
+        prev_val = (
+            valid.iloc[1][
+                "Close"
+            ]
+            if len(valid) > 1
+            else None
+        )
+
+        entry = make_entry(
+            curr_val,
+            prev_val,
+            curr_date
+        )
+
+        if entry is None:
+
+            raise ValueError(
+                "invalid current value: "
+                f"{curr_val}"
+            )
+
+        print(
+            f"  ✅ {symbol} "
+            "(yf.download): "
+            f"{entry['value']} "
+            f"({entry['date']})"
+        )
+
+        return entry
+
+    except Exception as e:
+
+        print(
+            f"  ❌ {symbol} "
+            "yfinance fallback: "
+            f"{type(e).__name__}: "
+            f"{e}"
+        )
+
+        return None
+
+
+# ============================================================
+# MARKET GET
+# ============================================================
+
+def market_get(
+    symbol,
+    target_date_str
+):
+    """
+    第一順位：
+        Yahoo chart API
+
+    fallback：
+        yfinance history
+        yf.download
+    """
+
+    entry = yahoo_chart_get(
+        symbol,
+        target_date_str
+    )
+
+    if entry:
+        return entry
+
+    print(
+        f"  ⚠ {symbol}: "
+        "Yahoo chart 失敗，"
+        "改用 yfinance fallback"
+    )
+
+    return yfinance_fallback_get(
+        symbol,
+        target_date_str
+    )
+
+
+# ============================================================
+# TREASURY
+# ============================================================
+
+def treasury_get(
+    target_date_str
+):
+    """
+    Treasury.gov 官方資料：
+    - 2Y
+    - 10Y
+    - 30Y
     """
 
     import xml.etree.ElementTree as ET
 
-    d = datetime.strptime(target_date_str, "%Y-%m-%d")
+    d = datetime.strptime(
+        target_date_str,
+        "%Y-%m-%d"
+    )
 
     months = set()
 
-    for delta in [0, 1, 2]:
-        m = d - timedelta(days=30 * delta)
-        months.add(m.strftime("%Y%m"))
+    for delta in [
+        0,
+        1,
+        2
+    ]:
 
-    D = "http://schemas.microsoft.com/ado/2007/08/dataservices"
-    M = "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata"
+        month_date = (
+            d
+            - timedelta(
+                days=30 * delta
+            )
+        )
+
+        months.add(
+            month_date.strftime(
+                "%Y%m"
+            )
+        )
+
+    D = (
+        "http://schemas.microsoft.com/"
+        "ado/2007/08/dataservices"
+    )
+
+    M = (
+        "http://schemas.microsoft.com/"
+        "ado/2007/08/dataservices/metadata"
+    )
 
     rows = []
 
-    for ym in sorted(months, reverse=True):
+    for ym in sorted(
+        months,
+        reverse=True
+    ):
 
         url = (
-            "https://home.treasury.gov/resource-center/data-chart-center"
-            "/interest-rates/pages/xml"
+            "https://home.treasury.gov/"
+            "resource-center/data-chart-center/"
+            "interest-rates/pages/xml"
             "?data=daily_treasury_yield_curve"
             f"&field_tdr_date_value_month={ym}"
         )
 
         try:
-            r = requests.get(
+
+            response = requests.get(
                 url,
                 timeout=20,
-                headers={"User-Agent": "Mozilla/5.0"}
+                headers=HEADERS
             )
-            r.raise_for_status()
 
-            root = ET.fromstring(r.content)
+            response.raise_for_status()
+
+            root = ET.fromstring(
+                response.content
+            )
 
             count = 0
 
-            for props in root.iter(f"{{{M}}}properties"):
+            for props in root.iter(
+                f"{{{M}}}properties"
+            ):
 
-                date_el = props.find(f"{{{D}}}NEW_DATE")
-                y2_el = props.find(f"{{{D}}}BC_2YEAR")
-                y10_el = props.find(f"{{{D}}}BC_10YEAR")
-                y30_el = props.find(f"{{{D}}}BC_30YEAR")
+                date_el = props.find(
+                    f"{{{D}}}NEW_DATE"
+                )
 
-                if date_el is None or not date_el.text:
+                y2_el = props.find(
+                    f"{{{D}}}BC_2YEAR"
+                )
+
+                y10_el = props.find(
+                    f"{{{D}}}BC_10YEAR"
+                )
+
+                y30_el = props.find(
+                    f"{{{D}}}BC_30YEAR"
+                )
+
+                if (
+                    date_el is None
+                    or not date_el.text
+                ):
                     continue
 
-                date_only = date_el.text[:10]
+                date_only = (
+                    date_el.text[:10]
+                )
 
-                if date_only > target_date_str:
+                if (
+                    date_only
+                    > target_date_str
+                ):
                     continue
 
                 y2v = (
-                    float(y2_el.text)
-                    if y2_el is not None and y2_el.text
+                    float(
+                        y2_el.text
+                    )
+                    if (
+                        y2_el
+                        is not None
+                        and y2_el.text
+                    )
                     else None
                 )
 
                 y10v = (
-                    float(y10_el.text)
-                    if y10_el is not None and y10_el.text
+                    float(
+                        y10_el.text
+                    )
+                    if (
+                        y10_el
+                        is not None
+                        and y10_el.text
+                    )
                     else None
                 )
 
                 y30v = (
-                    float(y30_el.text)
-                    if y30_el is not None and y30_el.text
+                    float(
+                        y30_el.text
+                    )
+                    if (
+                        y30_el
+                        is not None
+                        and y30_el.text
+                    )
                     else None
                 )
 
-                if is_valid_number(y2v):
+                if all(
+                    is_valid_number(v)
+                    for v in [
+                        y2v,
+                        y10v,
+                        y30v
+                    ]
+                ):
 
                     rows.append(
                         (
@@ -220,17 +944,32 @@ def treasury_get(target_date_str):
 
                     count += 1
 
-            print(f"  📥 Treasury.gov {ym}: {count} 筆")
+            print(
+                f"  📥 Treasury.gov "
+                f"{ym}: {count} 筆"
+            )
 
         except Exception as e:
+
             print(
-                f"  ❌ Treasury.gov {ym}: "
-                f"{type(e).__name__}: {e}"
+                f"  ❌ Treasury.gov "
+                f"{ym}: "
+                f"{type(e).__name__}: "
+                f"{e}"
             )
 
     if not rows:
-        print("  ⚠️ Treasury.gov 無有效資料")
-        return None, None, None
+
+        print(
+            "  ⚠️ Treasury.gov "
+            "無有效資料"
+        )
+
+        return (
+            None,
+            None,
+            None
+        )
 
     rows.sort(
         key=lambda x: x[0],
@@ -238,7 +977,12 @@ def treasury_get(target_date_str):
     )
 
     curr = rows[0]
-    prev = rows[1] if len(rows) > 1 else None
+
+    prev = (
+        rows[1]
+        if len(rows) > 1
+        else None
+    )
 
     print(
         f"  ✅ curr={curr[0]} "
@@ -247,536 +991,146 @@ def treasury_get(target_date_str):
         f"30Y={curr[3]}"
     )
 
-    def mk(idx):
-
-        cv = curr[idx]
-        pv = prev[idx] if prev else None
+    def mk(index):
 
         return make_entry(
-            cv,
-            pv,
+            curr[index],
+            (
+                prev[index]
+                if prev
+                else None
+            ),
             curr[0]
         )
 
-    return mk(1), mk(2), mk(3)
-
-
-# ── YFINANCE ─────────────────────────────────────────────────
-def yf_get(symbol, target_date_str):
-    """
-    使用 yfinance 抓股票或指數，
-    只接受 <= target_date 的資料。
-    """
-
-    d = datetime.strptime(
-        target_date_str,
-        "%Y-%m-%d"
+    return (
+        mk(1),
+        mk(2),
+        mk(3)
     )
 
-    start = (
-        d - timedelta(days=14)
-    ).strftime("%Y-%m-%d")
 
-    end = (
-        d + timedelta(days=2)
-    ).strftime("%Y-%m-%d")
+# ============================================================
+# FETCH ALL
+# ============================================================
 
-    try:
-
-        t = yf.Ticker(symbol)
-
-        hist = t.history(
-            start=start,
-            end=end,
-            interval="1d",
-            auto_adjust=True
-        )
-
-        if hist.empty:
-            raise ValueError("empty")
-
-        hist.index = hist.index.strftime(
-            "%Y-%m-%d"
-        )
-
-        valid = hist[
-            hist.index <= target_date_str
-        ].sort_index(
-            ascending=False
-        )
-
-        if valid.empty:
-            raise ValueError("no valid rows")
-
-        curr_date = valid.index[0]
-
-        curr_val = float(
-            valid.iloc[0]["Close"]
-        )
-
-        prev_val = (
-            float(valid.iloc[1]["Close"])
-            if len(valid) > 1
-            else None
-        )
-
-        entry = make_entry(
-            curr_val,
-            prev_val,
-            curr_date
-        )
-
-        if entry is None:
-            raise ValueError(
-                f"invalid current value: {curr_val}"
-            )
-
-        return entry
-
-    except Exception as e:
-
-        print(
-            f"  ⚠ t.history failed ({e}), "
-            f"trying yf.download..."
-        )
-
-        try:
-
-            hist2 = yf.download(
-                symbol,
-                start=start,
-                end=end,
-                interval="1d",
-                auto_adjust=True,
-                progress=False
-            )
-
-            if hist2.empty:
-                print(
-                    f"  ❌ yfinance {symbol}: no data"
-                )
-                return None
-
-            if isinstance(
-                hist2.columns,
-                pd.MultiIndex
-            ):
-                hist2.columns = (
-                    hist2.columns
-                    .get_level_values(0)
-                )
-
-            hist2.index = (
-                hist2.index
-                .strftime("%Y-%m-%d")
-            )
-
-            valid2 = hist2[
-                hist2.index <= target_date_str
-            ].sort_index(
-                ascending=False
-            )
-
-            if valid2.empty:
-                print(
-                    f"  ❌ yfinance {symbol}: "
-                    "no valid rows after filter"
-                )
-                return None
-
-            curr_date = valid2.index[0]
-
-            curr_val = float(
-                valid2.iloc[0]["Close"]
-            )
-
-            prev_val = (
-                float(valid2.iloc[1]["Close"])
-                if len(valid2) > 1
-                else None
-            )
-
-            entry = make_entry(
-                curr_val,
-                prev_val,
-                curr_date
-            )
-
-            if entry is None:
-                print(
-                    f"  ❌ yfinance {symbol}: "
-                    f"invalid value {curr_val}"
-                )
-                return None
-
-            return entry
-
-        except Exception as e2:
-
-            print(
-                f"  ❌ yfinance {symbol}: {e2}"
-            )
-
-            return None
-
-
-# ── MOVE ─────────────────────────────────────────────────────
-def move_get(target_date_str):
-    """
-    抓 MOVE 指數
-
-    1. 若 target 是今天，先試 quoteSummary
-    2. 再試 chart API
-    3. 最後 fallback yf_get
-    """
-
-    today_str = date.today().strftime(
-        "%Y-%m-%d"
-    )
-
-    # ── 方法 1：quoteSummary ──────────────────────────
-    if target_date_str == today_str:
-
-        for host in [
-            "query2.finance.yahoo.com",
-            "query1.finance.yahoo.com"
-        ]:
-
-            try:
-
-                url = (
-                    f"https://{host}"
-                    "/v10/finance/quoteSummary/%5EMOVE"
-                )
-
-                params = {
-                    "modules": "price"
-                }
-
-                headers = {
-                    "User-Agent":
-                        "Mozilla/5.0 "
-                        "(Windows NT 10.0; Win64; x64) "
-                        "AppleWebKit/537.36",
-                    "Accept": "application/json",
-                    "Referer":
-                        "https://finance.yahoo.com/",
-                }
-
-                r = requests.get(
-                    url,
-                    params=params,
-                    headers=headers,
-                    timeout=15
-                )
-
-                r.raise_for_status()
-
-                j = r.json()
-
-                price = (
-                    j["quoteSummary"]
-                    ["result"][0]
-                    ["price"]
-                )
-
-                curr_val = (
-                    price["regularMarketPrice"]
-                    ["raw"]
-                )
-
-                prev_val = (
-                    price["regularMarketPreviousClose"]
-                    ["raw"]
-                )
-
-                market_ts = (
-                    price["regularMarketTime"]
-                    ["raw"]
-                )
-
-                curr_date = (
-                    datetime
-                    .utcfromtimestamp(market_ts)
-                    .strftime("%Y-%m-%d")
-                )
-
-                entry = make_entry(
-                    curr_val,
-                    prev_val,
-                    curr_date
-                )
-
-                if entry is None:
-                    raise ValueError(
-                        "MOVE quote invalid value"
-                    )
-
-                print(
-                    f"  ✅ MOVE (quote {host}): "
-                    f"{entry['value']:.2f} "
-                    f"({curr_date})"
-                )
-
-                return entry
-
-            except Exception as e:
-
-                print(
-                    f"  ⚠ MOVE quote {host}: {e}"
-                )
-
-    # ── 方法 2：chart API ─────────────────────────────
-    for host in [
-        "query2.finance.yahoo.com",
-        "query1.finance.yahoo.com"
-    ]:
-
-        try:
-
-            url = (
-                f"https://{host}"
-                "/v8/finance/chart/%5EMOVE"
-            )
-
-            params = {
-                "interval": "1d",
-                "range": "10d"
-            }
-
-            headers = {
-                "User-Agent":
-                    "Mozilla/5.0 "
-                    "(Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36",
-                "Accept": "application/json",
-                "Referer":
-                    "https://finance.yahoo.com/",
-            }
-
-            r = requests.get(
-                url,
-                params=params,
-                headers=headers,
-                timeout=15
-            )
-
-            r.raise_for_status()
-
-            j = r.json()
-
-            result = j["chart"]["result"][0]
-
-            ts = result["timestamp"]
-
-            close = (
-                result["indicators"]
-                ["quote"][0]
-                ["close"]
-            )
-
-            rows = []
-
-            for t, c in zip(ts, close):
-
-                if not is_valid_number(c):
-                    continue
-
-                dt_str = (
-                    datetime
-                    .utcfromtimestamp(t)
-                    .strftime("%Y-%m-%d")
-                )
-
-                rows.append(
-                    (
-                        dt_str,
-                        float(c)
-                    )
-                )
-
-            rows.sort(
-                reverse=True
-            )
-
-            valid = [
-                (dt, v)
-                for dt, v in rows
-                if dt <= target_date_str
-            ]
-
-            if valid:
-
-                curr_date, curr_val = valid[0]
-
-                prev_val = (
-                    valid[1][1]
-                    if len(valid) > 1
-                    else None
-                )
-
-                entry = make_entry(
-                    curr_val,
-                    prev_val,
-                    curr_date
-                )
-
-                if entry is None:
-                    raise ValueError(
-                        "MOVE chart invalid value"
-                    )
-
-                print(
-                    f"  ✅ MOVE (chart {host}): "
-                    f"{entry['value']:.2f} "
-                    f"({curr_date})"
-                )
-
-                return entry
-
-        except Exception as e:
-
-            print(
-                f"  ⚠ MOVE chart {host}: {e}"
-            )
-
-    # ── 方法 3：fallback yfinance ─────────────────────
-    print("  ⚠ MOVE fallback yf_get...")
-
-    result = yf_get(
-        "^MOVE",
-        target_date_str
-    )
-
-    if result:
-
-        print(
-            f"  ✅ MOVE (yf_get): "
-            f"{result['value']} "
-            f"({result['date']})"
-        )
-
-    else:
-
-        print(
-            "  ❌ MOVE: 所有來源都失敗"
-        )
-
-    return result
-
-
-# ── FETCH ALL ────────────────────────────────────────────────
-def fetch_all(target):
+def fetch_all(
+    target
+):
 
     result = {
-        "generated_at":
-            datetime.utcnow().isoformat()
-            + "Z",
-        "target_date":
-            target,
+        "generated_at": (
+            datetime.utcnow()
+            .isoformat()
+            + "Z"
+        ),
+        "target_date": target,
     }
 
-    # ── VIX ────────────────────────────────────────────
-    print("📡 VIX...")
+    # --------------------------------------------------------
+    # VIX
+    # --------------------------------------------------------
 
-    d = yf_get(
+    print(
+        "📡 VIX..."
+    )
+
+    result[
+        "vix"
+    ] = market_get(
         "^VIX",
         target
     )
 
-    result["vix"] = d
+    # --------------------------------------------------------
+    # MOVE
+    # --------------------------------------------------------
 
     print(
-        f"  {'✅' if d else '❌'} "
-        f"VIX: "
-        f"{d['value'] if d else 'N/A'}"
+        "📡 MOVE..."
     )
 
-    # ── MOVE ───────────────────────────────────────────
-    print("📡 MOVE...")
+    result[
+        "move"
+    ] = market_get(
+        "^MOVE",
+        target
+    )
 
-    d = move_get(target)
-
-    result["move"] = d
+    # --------------------------------------------------------
+    # Treasury
+    # --------------------------------------------------------
 
     print(
-        f"  {'✅' if d else '❌'} "
-        f"MOVE: "
-        f"{d['value'] if d else 'N/A'}"
+        "📡 2Y/10Y/30Y "
+        "公債（Treasury.gov）..."
     )
 
-    # ── Treasury ───────────────────────────────────────
-    print(
-        "📡 2Y/10Y/30Y 公債（Treasury.gov）..."
+    y2, y10, y30 = treasury_get(
+        target
     )
 
-    y2, y10, y30 = treasury_get(target)
+    result[
+        "y2"
+    ] = y2
 
-    result["y2"] = y2
-    result["y10"] = y10
-    result["y30"] = y30
+    result[
+        "y10"
+    ] = y10
 
-    print(
-        f"  {'✅' if y2 else '❌'} "
-        f"2Y: "
-        f"{y2['value'] if y2 else 'N/A'}%"
-    )
+    result[
+        "y30"
+    ] = y30
 
-    print(
-        f"  {'✅' if y10 else '❌'} "
-        f"10Y: "
-        f"{y10['value'] if y10 else 'N/A'}%"
-    )
+    # --------------------------------------------------------
+    # 10Y-2Y spread
+    # --------------------------------------------------------
 
-    print(
-        f"  {'✅' if y30 else '❌'} "
-        f"30Y: "
-        f"{y30['value'] if y30 else 'N/A'}%"
-    )
-
-    # ── 10Y-2Y spread ─────────────────────────────────
     if (
-        result.get("y10")
-        and result.get("y2")
+        y10
+        and y2
     ):
 
-        spread = round(
+        result[
+            "spread"
+        ] = round(
             (
-                result["y10"]["value"]
-                - result["y2"]["value"]
+                y10[
+                    "value"
+                ]
+                - y2[
+                    "value"
+                ]
             )
             * 100,
             2
         )
 
-        result["spread"] = spread
-
-        print(
-            f"  ✅ 10Y-2Y 利差: "
-            f"{spread} bps"
-        )
-
     else:
 
-        result["spread"] = None
+        result[
+            "spread"
+        ] = None
 
-    # ── SOX ────────────────────────────────────────────
-    print("📡 SOX...")
+    # --------------------------------------------------------
+    # SOX
+    # --------------------------------------------------------
 
-    d = yf_get(
+    print(
+        "📡 SOX..."
+    )
+
+    result[
+        "sox"
+    ] = market_get(
         "^SOX",
         target
     )
 
-    result["sox"] = d
+    # --------------------------------------------------------
+    # STOCKS
+    # --------------------------------------------------------
 
-    print(
-        f"  {'✅' if d else '❌'} "
-        f"SOX: "
-        f"{d['value'] if d else 'N/A'}"
-    )
-
-    # ── 個股 ───────────────────────────────────────────
     stocks_meta = {
 
         "NVDA": {
@@ -810,69 +1164,98 @@ def fetch_all(target):
         },
     }
 
-    result["stocks"] = {}
+    result[
+        "stocks"
+    ] = {}
 
-    for sym, meta in stocks_meta.items():
+    for (
+        symbol,
+        meta
+    ) in stocks_meta.items():
 
-        print(f"📡 {sym}...")
+        print(
+            f"📡 {symbol}..."
+        )
 
-        d = yf_get(
-            sym,
+        entry = market_get(
+            symbol,
             target
         )
 
-        if d:
-            d.update(meta)
+        if entry:
 
-        result["stocks"][sym] = d
+            entry.update(
+                meta
+            )
 
-        print(
-            f"  {'✅' if d else '❌'} "
-            f"{sym}: "
-            f"${d['value'] if d else 'N/A'}"
-        )
+        result[
+            "stocks"
+        ][
+            symbol
+        ] = entry
 
     return result
 
 
-# ── DATA VALIDATION ──────────────────────────────────────────
-def validate_data(data, target):
-    """
-    寫檔前完整驗證。
+# ============================================================
+# VALIDATION
+# ============================================================
 
-    必須同時符合：
+def validate_data(
+    data,
+    target
+):
+    """
+    必須：
     1. 有資料
-    2. 日期 = TARGET
-    3. value 是有效有限數字
-
-    任一失敗：
-    → 不寫 market_YYYY-MM-DD.json
-    → 不更新 latest.json
-    → workflow 回傳失敗
+    2. date == TARGET
+    3. value 為 finite number
     """
 
-    checks = {}
+    checks = {
+        "VIX": data.get(
+            "vix"
+        ),
+        "MOVE": data.get(
+            "move"
+        ),
+        "SOX": data.get(
+            "sox"
+        ),
+        "2Y": data.get(
+            "y2"
+        ),
+        "10Y": data.get(
+            "y10"
+        ),
+        "30Y": data.get(
+            "y30"
+        ),
+    }
 
-    checks["VIX"] = data.get("vix")
-    checks["MOVE"] = data.get("move")
-    checks["SOX"] = data.get("sox")
+    for (
+        symbol,
+        stock
+    ) in data.get(
+        "stocks",
+        {}
+    ).items():
 
-    checks["2Y"] = data.get("y2")
-    checks["10Y"] = data.get("y10")
-    checks["30Y"] = data.get("y30")
-
-    for symbol, stock in (
-        data.get("stocks", {}).items()
-    ):
-        checks[symbol] = stock
+        checks[
+            symbol
+        ] = stock
 
     failed = []
 
-    print("\n🔎 資料完整性驗證")
+    print(
+        "\n🔎 資料完整性驗證"
+    )
 
-    for name, item in checks.items():
+    for (
+        name,
+        item
+    ) in checks.items():
 
-        # ── 無資料 ─────────────────────────────────────
         if item is None:
 
             failed.append(
@@ -880,16 +1263,28 @@ def validate_data(data, target):
             )
 
             print(
-                f"  ❌ {name}: 無資料"
+                f"  ❌ {name}: "
+                "無資料"
             )
 
             continue
 
-        actual_date = item.get("date")
-        value = item.get("value")
+        actual_date = (
+            item.get(
+                "date"
+            )
+        )
 
-        # ── 日期檢查 ───────────────────────────────────
-        if actual_date != target:
+        value = (
+            item.get(
+                "value"
+            )
+        )
+
+        if (
+            actual_date
+            != target
+        ):
 
             failed.append(
                 f"{name}: "
@@ -905,8 +1300,9 @@ def validate_data(data, target):
 
             continue
 
-        # ── 數值檢查 ───────────────────────────────────
-        if not is_valid_number(value):
+        if not is_valid_number(
+            value
+        ):
 
             failed.append(
                 f"{name}: "
@@ -915,7 +1311,6 @@ def validate_data(data, target):
 
             print(
                 f"  ❌ {name}: "
-                f"日期正確，但 "
                 f"value={value}"
             )
 
@@ -934,11 +1329,11 @@ def validate_data(data, target):
         )
 
         print(
-            "本次不寫入任何 JSON，"
-            "等待 GitHub Actions 重試。"
+            "本次不寫入任何 JSON。"
         )
 
         for msg in failed:
+
             print(
                 f"  - {msg}"
             )
@@ -952,32 +1347,22 @@ def validate_data(data, target):
     return True
 
 
-# ── MAIN ─────────────────────────────────────────────────────
-if __name__ == "__main__":
+# ============================================================
+# WRITE DATA
+# ============================================================
 
-    data = fetch_all(TARGET)
+def write_data(
+    data,
+    target
+):
 
-    # ── 寫檔前完整驗證 ────────────────────────────────
-    if not validate_data(
-        data,
-        TARGET
-    ):
+    # --------------------------------------------------------
+    # 日期檔
+    # --------------------------------------------------------
 
-        print(
-            "\n❌ DATA_NOT_READY"
-        )
-
-        print(
-            "資料尚未完整到達 TARGET，"
-            "本次執行失敗。"
-        )
-
-        sys.exit(2)
-
-    # ── 日期檔 ────────────────────────────────────────
     out_path = (
         DATA_DIR
-        / f"market_{TARGET}.json"
+        / f"market_{target}.json"
     )
 
     with open(
@@ -995,131 +1380,264 @@ if __name__ == "__main__":
         )
 
     print(
-        f"\n✅ 已寫入 {out_path}"
+        f"\n✅ 已寫入 "
+        f"{out_path}"
     )
 
-# ── latest.json ───────────────────────────────────
-latest_path = DATA_DIR / "latest.json"
+    # --------------------------------------------------------
+    # latest.json
+    # --------------------------------------------------------
 
-should_update_latest = True
-existing_latest_date = None
+    latest_path = (
+        DATA_DIR
+        / "latest.json"
+    )
 
-# 如果 latest.json 已存在，
-# 先確認這次 TARGET 是否比目前 latest 新或相同
-if latest_path.exists():
+    should_update_latest = True
 
-    try:
+    existing_latest_date = None
+
+    if latest_path.exists():
+
+        try:
+
+            with open(
+                latest_path,
+                "r",
+                encoding="utf-8"
+            ) as f:
+
+                existing_latest = (
+                    json.load(
+                        f
+                    )
+                )
+
+            existing_latest_date = (
+                existing_latest.get(
+                    "target_date"
+                )
+            )
+
+            if existing_latest_date:
+
+                new_date = (
+                    datetime.strptime(
+                        target,
+                        "%Y-%m-%d"
+                    )
+                    .date()
+                )
+
+                old_date = (
+                    datetime.strptime(
+                        existing_latest_date,
+                        "%Y-%m-%d"
+                    )
+                    .date()
+                )
+
+                if (
+                    new_date
+                    < old_date
+                ):
+
+                    should_update_latest = (
+                        False
+                    )
+
+        except Exception as e:
+
+            print(
+                "⚠️ 讀取 "
+                "existing latest.json "
+                f"失敗：{e}"
+            )
+
+            should_update_latest = True
+
+    if should_update_latest:
+
         with open(
             latest_path,
-            "r",
+            "w",
             encoding="utf-8"
         ) as f:
-            existing_latest = json.load(f)
 
-        existing_latest_date = existing_latest.get(
-            "target_date"
-        )
+            json.dump(
+                data,
+                f,
+                ensure_ascii=False,
+                indent=2,
+                allow_nan=False
+            )
 
-        if existing_latest_date:
-
-            current_target_date = datetime.strptime(
-                TARGET,
-                "%Y-%m-%d"
-            ).date()
-
-            old_latest_date = datetime.strptime(
-                existing_latest_date,
-                "%Y-%m-%d"
-            ).date()
-
-            # 歷史補抓不可讓 latest.json 往回退
-            if current_target_date < old_latest_date:
-                should_update_latest = False
-
-    except Exception as e:
         print(
-            f"⚠️ 讀取 existing latest.json 失敗：{e}"
+            f"✅ 已更新 "
+            f"{latest_path}"
         )
 
-        # 若舊 latest 本身讀不到，
-        # 允許用本次完整有效資料修復
-        should_update_latest = True
+    else:
 
-
-if should_update_latest:
-
-    with open(
-        latest_path,
-        "w",
-        encoding="utf-8"
-    ) as f:
-
-        json.dump(
-            data,
-            f,
-            ensure_ascii=False,
-            indent=2,
-            allow_nan=False
+        print(
+            f"ℹ️ 歷史補抓 "
+            f"TARGET={target}；"
+            f"目前 latest="
+            f"{existing_latest_date}，"
+            "不更新 latest.json"
         )
 
-    print(
-        f"✅ 已更新 {latest_path}"
-    )
 
-else:
+# ============================================================
+# SUMMARY
+# ============================================================
 
-    print(
-        f"ℹ️ 本次為歷史補抓 TARGET={TARGET}，"
-        f"目前 latest={existing_latest_date}，"
-        "因此不更新 latest.json"
-    )
+def print_summary(
+    data
+):
 
-    # ── 摘要 ──────────────────────────────────────────
     print(
         "\n📊 數據摘要:"
     )
 
-    if data.get("vix"):
+    if data.get(
+        "vix"
+    ):
 
-        v = data["vix"]["value"]
+        v = (
+            data[
+                "vix"
+            ][
+                "value"
+            ]
+        )
+
+        if v >= 30:
+
+            level = (
+                "🚨 恐慌"
+            )
+
+        elif v >= 20:
+
+            level = (
+                "⚠️ 警戒"
+            )
+
+        else:
+
+            level = (
+                "✅ 正常"
+            )
 
         print(
-            f"  VIX: {v:.2f} "
-            f"{'🚨 恐慌' if v >= 30 else '⚠️ 警戒' if v >= 20 else '✅ 正常'}"
+            f"  VIX: "
+            f"{v:.2f} "
+            f"{level}"
         )
 
     if (
-        data.get("y10")
-        and data.get("y2")
+        data.get(
+            "y10"
+        )
+        and data.get(
+            "y2"
+        )
+    ):
+
+        spread = (
+            data.get(
+                "spread"
+            )
+        )
+
+        suffix = ""
+
+        if (
+            spread
+            is not None
+            and spread < 0
+        ):
+
+            suffix = (
+                " 🚨 倒掛！"
+            )
+
+        print(
+            "  10Y-2Y 利差: "
+            f"{spread} bps"
+            f"{suffix}"
+        )
+
+    for (
+        symbol,
+        stock
+    ) in data.get(
+        "stocks",
+        {}
+    ).items():
+
+        if not stock:
+            continue
+
+        chg_pct = (
+            stock.get(
+                "chg_pct"
+            )
+        )
+
+        if is_valid_number(
+            chg_pct
+        ):
+
+            print(
+                f"  {symbol}: "
+                f"${stock['value']:.2f} "
+                f"({chg_pct:+.2f}%)"
+            )
+
+        else:
+
+            print(
+                f"  {symbol}: "
+                f"${stock['value']:.2f}"
+            )
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+
+    data = fetch_all(
+        TARGET
+    )
+
+    if not validate_data(
+        data,
+        TARGET
     ):
 
         print(
-            f"  10Y-2Y 利差: "
-            f"{data['spread']} bps "
-            f"{'🚨 倒掛！' if data['spread'] < 0 else ''}"
+            "\n❌ DATA_NOT_READY"
         )
 
-    for sym, s in (
-        data.get("stocks", {}).items()
-    ):
+        print(
+            "資料尚未完整到達 "
+            "TARGET，"
+            "本次執行失敗。"
+        )
 
-        if s:
+        sys.exit(
+            2
+        )
 
-            chg_pct = s.get(
-                "chg_pct"
-            )
+    write_data(
+        data,
+        TARGET
+    )
 
-            if is_valid_number(chg_pct):
-
-                print(
-                    f"  {sym}: "
-                    f"${s['value']:.2f} "
-                    f"({chg_pct:+.2f}%)"
-                )
-
-            else:
-
-                print(
-                    f"  {sym}: "
-                    f"${s['value']:.2f}"
-                )
+    print_summary(
+        data
+    )
