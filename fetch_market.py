@@ -1024,4 +1024,7 @@ def yfinance_history_get(
 
         hist.index = (
             hist.index
-            .st
+            .strftime(
+                "%Y-%m-%d"
+            )
+        ) 
