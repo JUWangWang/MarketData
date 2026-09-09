@@ -1049,4 +1049,376 @@ def fetch_all(
     data["spread"] = (
         round(
             (
-                y10[
+                y10["value"]
+                - y2["value"]
+            )
+            * 100,
+            2,
+        )
+        if y2 and y10
+        else None
+    )
+
+    print("\n📡 SOX")
+    data["sox"] = market_get(
+        "^SOX",
+        target_date,
+    )
+
+    data["stocks"] = {}
+
+    for symbol, meta in (
+        STOCKS_META.items()
+    ):
+        print(
+            f"\n📡 {symbol}"
+        )
+
+        item = market_get(
+            symbol,
+            target_date,
+        )
+
+        if item:
+            item.update(meta)
+
+        data["stocks"][
+            symbol
+        ] = item
+
+        time.sleep(0.5)
+
+    return data
+
+
+def validate_data(
+    data,
+    target_date,
+):
+    checks = {
+        "VIX": data.get("vix"),
+        "MOVE": data.get("move"),
+        "SOX": data.get("sox"),
+        "2Y": data.get("y2"),
+        "10Y": data.get("y10"),
+        "30Y": data.get("y30"),
+    }
+
+    checks.update(
+        data.get(
+            "stocks",
+            {},
+        )
+    )
+
+    failed = []
+
+    print(
+        "\n======================================"
+    )
+
+    print(
+        "🔎 資料完整性驗證"
+    )
+
+    print(
+        "======================================"
+    )
+
+    for name, item in (
+        checks.items()
+    ):
+        if not isinstance(
+            item,
+            dict,
+        ):
+            print(
+                f"❌ {name}: 無資料"
+            )
+
+            failed.append(
+                f"{name}: 無資料"
+            )
+
+            continue
+
+        actual_date = (
+            item.get("date")
+        )
+
+        value = (
+            item.get("value")
+        )
+
+        source = (
+            item.get(
+                "source",
+                "-",
+            )
+        )
+
+        if (
+            actual_date
+            != target_date
+        ):
+            print(
+                f"❌ {name}: "
+                f"日期 {actual_date} "
+                f"(應為 {target_date}) "
+                f"[{source}]"
+            )
+
+            failed.append(
+                f"{name}: "
+                f"expected={target_date}, "
+                f"actual={actual_date}"
+            )
+
+            continue
+
+        if not is_valid_number(
+            value
+        ):
+            print(
+                f"❌ {name}: "
+                f"invalid value={value} "
+                f"[{source}]"
+            )
+
+            failed.append(
+                f"{name}: "
+                f"invalid value={value}"
+            )
+
+            continue
+
+        print(
+            f"✅ {name}: "
+            f"{actual_date}, "
+            f"value={value} "
+            f"[{source}]"
+        )
+
+    if failed:
+        print(
+            "\n⚠️ 市場資料未完整到達 TARGET"
+        )
+
+        print(
+            "本次不寫入任何 JSON。"
+        )
+
+        for msg in failed:
+            print(
+                f"  - {msg}"
+            )
+
+        return False
+
+    print(
+        "\n✅ "
+        "所有市場資料日期與數值均正確"
+    )
+
+    return True
+
+
+def write_data(
+    data,
+    target_date,
+):
+    market_path = (
+        DATA_DIR
+        / f"market_{target_date}.json"
+    )
+
+    with market_path.open(
+        "w",
+        encoding="utf-8",
+    ) as f:
+        json.dump(
+            data,
+            f,
+            ensure_ascii=False,
+            indent=2,
+            allow_nan=False,
+        )
+
+    print(
+        f"\n✅ 已寫入 "
+        f"{market_path}"
+    )
+
+    latest_path = (
+        DATA_DIR
+        / "latest.json"
+    )
+
+    existing_latest_date = None
+    should_update_latest = True
+
+    if latest_path.exists():
+        try:
+            with latest_path.open(
+                "r",
+                encoding="utf-8",
+            ) as f:
+                existing = (
+                    json.load(f)
+                )
+
+            existing_latest_date = (
+                existing.get(
+                    "target_date"
+                )
+            )
+
+            if existing_latest_date:
+                old_date = (
+                    datetime.strptime(
+                        existing_latest_date,
+                        "%Y-%m-%d",
+                    )
+                    .date()
+                )
+
+                new_date = (
+                    datetime.strptime(
+                        target_date,
+                        "%Y-%m-%d",
+                    )
+                    .date()
+                )
+
+                if new_date < old_date:
+                    should_update_latest = False
+
+        except Exception as exc:
+            print(
+                "⚠️ latest.json "
+                "讀取失敗："
+                f"{type(exc).__name__}: "
+                f"{exc}"
+            )
+
+    if should_update_latest:
+        with latest_path.open(
+            "w",
+            encoding="utf-8",
+        ) as f:
+            json.dump(
+                data,
+                f,
+                ensure_ascii=False,
+                indent=2,
+                allow_nan=False,
+            )
+
+        print(
+            f"✅ 已更新 "
+            f"{latest_path}"
+        )
+
+    else:
+        print(
+            f"ℹ️ TARGET={target_date} "
+            f"< latest="
+            f"{existing_latest_date}，"
+            "不更新 latest.json"
+        )
+
+
+def print_summary(data):
+    print(
+        "\n📊 數據摘要"
+    )
+
+    if data.get("vix"):
+        print(
+            f"  VIX: "
+            f"{data['vix']['value']:.2f}"
+        )
+
+    if (
+        data.get("spread")
+        is not None
+    ):
+        print(
+            f"  10Y-2Y: "
+            f"{data['spread']} bps"
+        )
+
+    for symbol, item in (
+        data.get(
+            "stocks",
+            {},
+        )
+        .items()
+    ):
+        if not item:
+            continue
+
+        chg_pct = (
+            item.get("chg_pct")
+        )
+
+        source = (
+            item.get(
+                "source",
+                "-",
+            )
+        )
+
+        if is_valid_number(
+            chg_pct
+        ):
+            print(
+                f"  {symbol}: "
+                f"${item['value']:.2f} "
+                f"({chg_pct:+.2f}%) "
+                f"[{source}]"
+            )
+
+        else:
+            print(
+                f"  {symbol}: "
+                f"${item['value']:.2f} "
+                f"[{source}]"
+            )
+
+
+if __name__ == "__main__":
+    print(
+        "🕒 Taiwan time:",
+        datetime.now(
+            ZoneInfo("Asia/Taipei")
+        ).isoformat(),
+    )
+
+    print(
+        "🗓 Target market date:",
+        TARGET,
+    )
+
+    data = fetch_all(
+        TARGET
+    )
+
+    if not validate_data(
+        data,
+        TARGET,
+    ):
+        print(
+            "\n❌ DATA_NOT_READY"
+        )
+
+        sys.exit(2)
+
+    write_data(
+        data,
+        TARGET,
+    )
+
+    print_summary(
+        data
+    )
