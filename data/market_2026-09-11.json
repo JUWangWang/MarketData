@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-12T01:25:33.146739+00:00",
+  "generated_at": "2026-09-14T01:07:29.669959+00:00",
   "target_date": "2026-09-11",
   "vix": {
     "value": 15.84,
@@ -10,10 +10,10 @@
     "source": "yahoo_daily:query2.finance.yahoo.com"
   },
   "move": {
-    "value": 82.2068,
+    "value": 82.21,
     "prev": 82.09,
-    "chg_abs": 0.116806,
-    "chg_pct": 0.1423,
+    "chg_abs": 0.120003,
+    "chg_pct": 0.1462,
     "date": "2026-09-11",
     "source": "yahoo_daily:query2.finance.yahoo.com"
   },
@@ -43,9 +43,9 @@
   },
   "spread": 33.0,
   "sox": {
-    "value": 11823.998,
+    "value": 11824.0,
     "prev": 11614.1699,
-    "chg_abs": 209.828125,
+    "chg_abs": 209.830078,
     "chg_pct": 1.8067,
     "date": "2026-09-11",
     "source": "yahoo_daily:query2.finance.yahoo.com"
@@ -57,7 +57,7 @@
       "chg_abs": -0.070007,
       "chg_pct": -0.0321,
       "date": "2026-09-11",
-      "source": "yahoo_intraday_5m:query2.finance.yahoo.com",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
       "name": "輝達",
       "emoji": "🟢",
       "grade": "IG1"
@@ -68,7 +68,7 @@
       "chg_abs": 5.209991,
       "chg_pct": 1.2172,
       "date": "2026-09-11",
-      "source": "yahoo_intraday_5m:query2.finance.yahoo.com",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
       "name": "台積電",
       "emoji": "🔵",
       "grade": "IG1"
@@ -79,7 +79,7 @@
       "chg_abs": 2.719997,
       "chg_pct": 7.2766,
       "date": "2026-09-11",
-      "source": "yahoo_intraday_5m:query2.finance.yahoo.com",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
       "name": "超微電腦",
       "emoji": "⚡",
       "grade": "HY1"
@@ -90,7 +90,7 @@
       "chg_abs": 10.610016,
       "chg_pct": 4.1742,
       "date": "2026-09-11",
-      "source": "yahoo_intraday_5m:query2.finance.yahoo.com",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
       "name": "安謀控股",
       "emoji": "💻",
       "grade": "IG1"
@@ -101,7 +101,7 @@
       "chg_abs": 1.880005,
       "chg_pct": 0.5171,
       "date": "2026-09-11",
-      "source": "yahoo_intraday_5m:query2.finance.yahoo.com",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
       "name": "特斯拉",
       "emoji": "🚗",
       "grade": "IG3"
