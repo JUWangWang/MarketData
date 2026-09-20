@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-19T01:27:58.897644+00:00",
+  "generated_at": "2026-09-20T14:35:09.506494+00:00",
   "target_date": "2026-09-18",
   "vix": {
     "value": 14.81,
@@ -10,10 +10,10 @@
     "source": "yahoo_daily:query2.finance.yahoo.com"
   },
   "move": {
-    "value": 80.635,
+    "value": 80.64,
     "prev": 76.22,
-    "chg_abs": 4.415001,
-    "chg_pct": 5.7924,
+    "chg_abs": 4.419998,
+    "chg_pct": 5.799,
     "date": "2026-09-18",
     "source": "yahoo_daily:query2.finance.yahoo.com"
   },
@@ -43,9 +43,9 @@
   },
   "spread": 25.0,
   "sox": {
-    "value": 11921.6855,
+    "value": 11921.6904,
     "prev": 11599.4902,
-    "chg_abs": 322.195312,
+    "chg_abs": 322.200195,
     "chg_pct": 2.7777,
     "date": "2026-09-18",
     "source": "yahoo_daily:query2.finance.yahoo.com"
@@ -90,7 +90,7 @@
       "chg_abs": 10.709991,
       "chg_pct": 4.043,
       "date": "2026-09-18",
-      "source": "yahoo_intraday_5m:query2.finance.yahoo.com",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
       "name": "安謀控股",
       "emoji": "💻",
       "grade": "IG1"
