@@ -1,0 +1,110 @@
+{
+  "generated_at": "2026-11-13T03:32:01.448232+00:00",
+  "target_date": "2026-11-12",
+  "vix": {
+    "value": 18.7,
+    "prev": 17.49,
+    "chg_abs": 1.210001,
+    "chg_pct": 6.9182,
+    "date": "2026-11-12",
+    "source": "yahoo_daily:query2.finance.yahoo.com"
+  },
+  "move": {
+    "value": 98.4302,
+    "prev": 92.43,
+    "chg_abs": 6.000198,
+    "chg_pct": 6.4916,
+    "date": "2026-11-12",
+    "source": "yahoo_daily:query2.finance.yahoo.com"
+  },
+  "y2": {
+    "value": 4.86,
+    "prev": 4.73,
+    "chg_abs": 0.13,
+    "chg_pct": 2.7484,
+    "date": "2026-11-12",
+    "source": "treasury_gov"
+  },
+  "y10": {
+    "value": 5.1,
+    "prev": 4.98,
+    "chg_abs": 0.12,
+    "chg_pct": 2.4096,
+    "date": "2026-11-12",
+    "source": "treasury_gov"
+  },
+  "y30": {
+    "value": 5.43,
+    "prev": 5.35,
+    "chg_abs": 0.08,
+    "chg_pct": 1.4953,
+    "date": "2026-11-12",
+    "source": "treasury_gov"
+  },
+  "spread": 24.0,
+  "sox": {
+    "value": 10506.6738,
+    "prev": 10564.1104,
+    "chg_abs": -57.436523,
+    "chg_pct": -0.5437,
+    "date": "2026-11-12",
+    "source": "yahoo_daily:query2.finance.yahoo.com"
+  },
+  "stocks": {
+    "NVDA": {
+      "value": 166.19,
+      "prev": 173.73,
+      "chg_abs": -7.539993,
+      "chg_pct": -4.3401,
+      "date": "2026-11-12",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
+      "name": "輝達",
+      "emoji": "🟢",
+      "grade": "IG1"
+    },
+    "TSM": {
+      "value": 405.49,
+      "prev": 413.35,
+      "chg_abs": -7.860016,
+      "chg_pct": -1.9015,
+      "date": "2026-11-12",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
+      "name": "台積電",
+      "emoji": "🔵",
+      "grade": "IG1"
+    },
+    "SMCI": {
+      "value": 26.99,
+      "prev": 30.43,
+      "chg_abs": -3.440001,
+      "chg_pct": -11.3046,
+      "date": "2026-11-12",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
+      "name": "超微電腦",
+      "emoji": "⚡",
+      "grade": "HY1"
+    },
+    "ARM": {
+      "value": 199.78,
+      "prev": 203.36,
+      "chg_abs": -3.580002,
+      "chg_pct": -1.7604,
+      "date": "2026-11-12",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
+      "name": "安謀控股",
+      "emoji": "💻",
+      "grade": "IG1"
+    },
+    "TSLA": {
+      "value": 397.45,
+      "prev": 390.84,
+      "chg_abs": 6.610016,
+      "chg_pct": 1.6912,
+      "date": "2026-11-12",
+      "source": "yahoo_daily:query2.finance.yahoo.com",
+      "name": "特斯拉",
+      "emoji": "🚗",
+      "grade": "IG3"
+    }
+  }
+}
